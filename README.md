@@ -1,4 +1,8 @@
 
+# Installation (pip)
+* pip3  install beautifulsoup4
+* pip3  install requests
+
 Read the games from D3Football.com
 
 Get list of teams from current year
