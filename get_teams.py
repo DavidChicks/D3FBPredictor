@@ -24,6 +24,117 @@ URL_ROOT = "https://www.d3football.com/"
 URL = "https://www.d3football.com/teams/index"
 DEFAULT_SAVE_PATH = os.path.join("data", "teams_index.html")
 
+# keys for stat splitting rules
+stat_splitter_ignore_fields = "stat_splitter_ignore_fields"
+stat_splitter_type = "stat_splitter_type"
+stat_splitter_type_split = "stat_splitter_type_split"
+stat_splitter_type_percent = "stat_splitter_type_percent"
+stat_splitter_key_prepend = "prepend"
+stat_splitter_key_postpend = "postpend"
+stat_splitter_key_postremove = "postremove"
+stat_splitter_percentage = "stat_splitter_percentage"
+stat_splitter_key_success = "stat_splitter_key_success"
+stat_splitter_field_splitter = "stat_splitter_field_splitter"
+stat_spliiter_expectted_fields_count = "stat_spliiter_expectted_fields_count"
+stat_splitter_field_splitter_field_header_determiner = "stat_splitter_field_splitter_field_header_determiner"
+
+stat_sub_splitter = "stat_sub_splitter"
+stat_splitter = {
+    "PassingRushingPenalty": {
+        stat_splitter_type: stat_splitter_type_split,
+        stat_splitter_ignore_fields: "<br/>",
+        stat_splitter_key_prepend: "First Down by ",
+        stat_splitter_field_splitter: None,
+        stat_splitter_field_splitter_field_header_determiner: None,
+        stat_spliiter_expectted_fields_count: 3
+        },
+    "THIRD DOWN EFFICIENCY": {
+        stat_splitter_type: stat_splitter_type_percent,
+        stat_splitter_key_postremove: " EFFICIENCY",
+        stat_splitter_key_success: " Conversions",
+        stat_splitter_field_splitter_field_header_determiner: None
+        },
+    "FOURTH DOWN EFFICIENCY": {
+        stat_splitter_type: stat_splitter_type_percent,
+        stat_splitter_key_postremove: "EFFICIENCY",
+        stat_splitter_key_success: " Conversions",
+        stat_splitter_field_splitter_field_header_determiner: None
+        },
+    "Total Offensive PlaysAverage gain per play": {
+        stat_splitter_type: stat_splitter_type_split,
+        stat_splitter_ignore_fields: "<br/>",
+        stat_splitter_key_prepend: None,
+        stat_splitter_field_splitter: None,
+        stat_splitter_field_splitter_field_header_determiner: None,
+        stat_spliiter_expectted_fields_count: 2
+        },
+    "PUNTS: Number-Yards": {
+        stat_splitter_type: stat_splitter_type_split,
+        stat_splitter_ignore_fields: None,
+        stat_splitter_key_prepend: None,
+        stat_splitter_field_splitter: "-",
+        stat_splitter_field_splitter_field_header_determiner: ": ",
+        stat_spliiter_expectted_fields_count: 2
+        },
+    "SACKS: Number-Yards": {
+        stat_splitter_type: stat_splitter_type_split,
+        stat_splitter_ignore_fields: None,
+        stat_splitter_key_prepend: None,
+        stat_splitter_field_splitter: "-",
+        stat_splitter_field_splitter_field_header_determiner: ": ",
+        stat_spliiter_expectted_fields_count: 2
+        },
+    "PENALTIES: Number-Yards": {
+        stat_splitter_type: stat_splitter_type_split,
+        stat_splitter_ignore_fields: None,
+        stat_splitter_key_prepend: None,
+        stat_splitter_field_splitter: "-",
+        stat_splitter_field_splitter_field_header_determiner: ": ",
+        stat_spliiter_expectted_fields_count: 2
+        },
+    "FUMBLES: Number-Lost": {
+        stat_splitter_type: stat_splitter_type_split,
+        stat_splitter_ignore_fields: None,
+        stat_splitter_key_prepend: None,
+        stat_splitter_field_splitter: "-",
+        stat_splitter_field_splitter_field_header_determiner: ": ",
+        stat_spliiter_expectted_fields_count: 2
+        },
+    "INTERCEPTIONS: Number-Yards": {    # does this work if yars is negative??
+        stat_splitter_type: stat_splitter_type_split,
+        stat_splitter_ignore_fields: None,
+        stat_splitter_key_prepend: None,
+        stat_splitter_field_splitter: "-",
+        stat_splitter_field_splitter_field_header_determiner: ": ",
+        stat_spliiter_expectted_fields_count: 2
+        },
+    "Rushing AttemptsAverage gain per rush": {
+        stat_splitter_type: stat_splitter_type_split,
+        stat_splitter_ignore_fields: "<br/>",
+        stat_splitter_key_prepend: None,
+        stat_splitter_field_splitter: None,
+        stat_splitter_field_splitter_field_header_determiner: None,
+        stat_spliiter_expectted_fields_count: 2
+        },
+    "Completions-AttemptsNet yards per pass playSacked: Number-YardsHad intercepted": {
+        stat_splitter_type: stat_splitter_type_split,
+        stat_splitter_ignore_fields: "<br/>",
+        stat_splitter_key_prepend: None,
+        stat_splitter_field_splitter: None,
+        stat_splitter_field_splitter_field_header_determiner: None,
+        stat_spliiter_expectted_fields_count: 4
+        },
+    "Punt Returns: Number-YardsKickoff Returns: Number-YardsInterception Returns: Number-Yards": {
+        stat_splitter_type: stat_splitter_type_split,
+        stat_splitter_ignore_fields: "<br/>",
+        stat_splitter_key_prepend: None,
+        stat_splitter_field_splitter: None,
+        stat_splitter_field_splitter_field_header_determiner: None,
+        stat_spliiter_expectted_fields_count: 3
+        },
+
+}
+
 
 def fetch_url(url: str, timeout: int = 15) -> str:
     headers = {
@@ -215,115 +326,6 @@ def get_game_stats(game_url: str) -> Optional[dict]:
     team_away = team_names[0].get_text(strip=True)
     team_home = team_names[2].get_text(strip=True)
 
-    stat_splitter_ignore_fields = "stat_splitter_ignore_fields"
-    stat_splitter_type = "stat_splitter_type"
-    stat_splitter_type_split = "stat_splitter_type_split"
-    stat_splitter_type_percent = "stat_splitter_type_percent"
-    stat_splitter_key_prepend = "prepend"
-    stat_splitter_key_postpend = "postpend"
-    stat_splitter_key_postremove = "postremove"
-    stat_splitter_percentage = "stat_splitter_percentage"
-    stat_splitter_key_success = "stat_splitter_key_success"
-    stat_splitter_field_splitter = "stat_splitter_field_splitter"
-    stat_spliiter_expectted_fields_count = "stat_spliiter_expectted_fields_count"
-    stat_splitter_field_splitter_field_header_determiner = "stat_splitter_field_splitter_field_header_determiner"
-
-    stat_sub_splitter = "stat_sub_splitter"
-    stat_splitter = {
-        "PassingRushingPenalty": {
-            stat_splitter_type: stat_splitter_type_split,
-            stat_splitter_ignore_fields: "<br/>",
-            stat_splitter_key_prepend: "First Down by ",
-            stat_splitter_field_splitter: None,
-            stat_splitter_field_splitter_field_header_determiner: None,
-            stat_spliiter_expectted_fields_count: 3
-            },
-        "THIRD DOWN EFFICIENCY": {
-            stat_splitter_type: stat_splitter_type_percent,
-            stat_splitter_key_postremove: " EFFICIENCY",
-            stat_splitter_key_success: " Conversions",
-            stat_splitter_field_splitter_field_header_determiner: None
-            },
-        "FOURTH DOWN EFFICIENCY": {
-            stat_splitter_type: stat_splitter_type_percent,
-            stat_splitter_key_postremove: "EFFICIENCY",
-            stat_splitter_key_success: "Conversions",
-            stat_splitter_field_splitter_field_header_determiner: None
-            },
-        "Total Offensive PlaysAverage gain per play": {
-            stat_splitter_type: stat_splitter_type_split,
-            stat_splitter_ignore_fields: "<br/>",
-            stat_splitter_key_prepend: None,
-            stat_splitter_field_splitter: None,
-            stat_splitter_field_splitter_field_header_determiner: None,
-            stat_spliiter_expectted_fields_count: 2
-            },
-        "PUNTS: Number-Yards": {
-            stat_splitter_type: stat_splitter_type_split,
-            stat_splitter_ignore_fields: None,
-            stat_splitter_key_prepend: None,
-            stat_splitter_field_splitter: "-",
-            stat_splitter_field_splitter_field_header_determiner: ": ",
-            stat_spliiter_expectted_fields_count: 2
-            },
-        "SACKS: Number-Yards": {
-            stat_splitter_type: stat_splitter_type_split,
-            stat_splitter_ignore_fields: None,
-            stat_splitter_key_prepend: None,
-            stat_splitter_field_splitter: "-",
-            stat_splitter_field_splitter_field_header_determiner: ": ",
-            stat_spliiter_expectted_fields_count: 2
-            },
-        "PENALTIES: Number-Yards": {
-            stat_splitter_type: stat_splitter_type_split,
-            stat_splitter_ignore_fields: None,
-            stat_splitter_key_prepend: None,
-            stat_splitter_field_splitter: "-",
-            stat_splitter_field_splitter_field_header_determiner: ": ",
-            stat_spliiter_expectted_fields_count: 2
-            },
-        "FUMBLES: Number-Lost": {
-            stat_splitter_type: stat_splitter_type_split,
-            stat_splitter_ignore_fields: None,
-            stat_splitter_key_prepend: None,
-            stat_splitter_field_splitter: "-",
-            stat_splitter_field_splitter_field_header_determiner: ": ",
-            stat_spliiter_expectted_fields_count: 2
-            },
-        "INTERCEPTIONS: Number-Yards": {
-            stat_splitter_type: stat_splitter_type_split,
-            stat_splitter_ignore_fields: None,
-            stat_splitter_key_prepend: None,
-            stat_splitter_field_splitter: "-",
-            stat_splitter_field_splitter_field_header_determiner: ": ",
-            stat_spliiter_expectted_fields_count: 2
-            },
-        "Rushing AttemptsAverage gain per rush": {
-            stat_splitter_type: stat_splitter_type_split,
-            stat_splitter_ignore_fields: "<br/>",
-            stat_splitter_key_prepend: None,
-            stat_splitter_field_splitter: None,
-            stat_splitter_field_splitter_field_header_determiner: None,
-            stat_spliiter_expectted_fields_count: 2
-            },
-        "Completions-AttemptsNet yards per pass playSacked: Number-YardsHad intercepted": {
-            stat_splitter_type: stat_splitter_type_split,
-            stat_splitter_ignore_fields: "<br/>",
-            stat_splitter_key_prepend: None,
-            stat_splitter_field_splitter: None,
-            stat_splitter_field_splitter_field_header_determiner: None,
-            stat_spliiter_expectted_fields_count: 4
-            },
-        "Punt Returns: Number-YardsKickoff Returns: Number-YardsInterception Returns: Number-Yards": {
-            stat_splitter_type: stat_splitter_type_split,
-            stat_splitter_ignore_fields: "<br/>",
-            stat_splitter_key_prepend: None,
-            stat_splitter_field_splitter: None,
-            stat_splitter_field_splitter_field_header_determiner: None,
-            stat_spliiter_expectted_fields_count: 3
-            },
-
-    }
     for row in rows:
         print(f"  Processing row")
         # get the first anchor in the row
@@ -472,7 +474,7 @@ def main() -> None:
     # games = get_team_games("linfield", 2021)
     # print(f"Found games for Linfield in 2021")
     # pprint.pp(games)
-    game_stats = get_and_save_game_stats("/seasons/2025/boxscores/20251004_xmdh.xml", os.path.join("data", "games"))
+    game_stats = get_and_save_game_stats("/seasons/2014/boxscores/20141213_katn.xml", os.path.join("data", "games"))
     pprint.pp(game_stats)
 
 
