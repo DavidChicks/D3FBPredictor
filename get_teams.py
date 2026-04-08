@@ -266,6 +266,38 @@ def get_game_stats(game_url: str) -> Optional[dict]:
             stat_splitter_field_splitter_field_header_determiner: ": ",
             stat_spliiter_expectted_fields_count: 2
             },
+        "SACKS: Number-Yards": {
+            stat_splitter_type: stat_splitter_type_split,
+            stat_splitter_ignore_fields: None,
+            stat_splitter_key_prepend: None,
+            stat_splitter_field_splitter: "-",
+            stat_splitter_field_splitter_field_header_determiner: ": ",
+            stat_spliiter_expectted_fields_count: 2
+            },
+        "PENALTIES: Number-Yards": {
+            stat_splitter_type: stat_splitter_type_split,
+            stat_splitter_ignore_fields: None,
+            stat_splitter_key_prepend: None,
+            stat_splitter_field_splitter: "-",
+            stat_splitter_field_splitter_field_header_determiner: ": ",
+            stat_spliiter_expectted_fields_count: 2
+            },
+        "FUMBLES: Number-Lost": {
+            stat_splitter_type: stat_splitter_type_split,
+            stat_splitter_ignore_fields: None,
+            stat_splitter_key_prepend: None,
+            stat_splitter_field_splitter: "-",
+            stat_splitter_field_splitter_field_header_determiner: ": ",
+            stat_spliiter_expectted_fields_count: 2
+            },
+        "INTERCEPTIONS: Number-Yards": {
+            stat_splitter_type: stat_splitter_type_split,
+            stat_splitter_ignore_fields: None,
+            stat_splitter_key_prepend: None,
+            stat_splitter_field_splitter: "-",
+            stat_splitter_field_splitter_field_header_determiner: ": ",
+            stat_spliiter_expectted_fields_count: 2
+            },
         "Rushing AttemptsAverage gain per rush": {
             stat_splitter_type: stat_splitter_type_split,
             stat_splitter_ignore_fields: "<br/>",
@@ -281,6 +313,14 @@ def get_game_stats(game_url: str) -> Optional[dict]:
             stat_splitter_field_splitter: None,
             stat_splitter_field_splitter_field_header_determiner: None,
             stat_spliiter_expectted_fields_count: 4
+            },
+        "Punt Returns: Number-YardsKickoff Returns: Number-YardsInterception Returns: Number-Yards": {
+            stat_splitter_type: stat_splitter_type_split,
+            stat_splitter_ignore_fields: "<br/>",
+            stat_splitter_key_prepend: None,
+            stat_splitter_field_splitter: None,
+            stat_splitter_field_splitter_field_header_determiner: None,
+            stat_spliiter_expectted_fields_count: 3
             },
 
     }
