@@ -7,18 +7,15 @@ Usage:
 from __future__ import annotations
 
 import argparse
-from dataclasses import field
-import os
+import json
 import logging
-# from re import I
+import os
+import pprint
 import re
+import requests
 from typing import Optional
 
-import requests
 from bs4 import BeautifulSoup
-import json
-
-import pprint
 
 URL_ROOT = "https://www.d3football.com/"
 URL = "https://www.d3football.com/teams/index"
@@ -128,10 +125,18 @@ stat_splitter = {
         stat_splitter_type: stat_splitter_type_split,
         stat_splitter_ignore_fields: "<br/>",
         stat_splitter_key_prepend: None,
-        stat_splitter_field_splitter: None,
-        stat_splitter_field_splitter_field_header_determiner: None,
-        stat_spliiter_expectted_fields_count: 3
+        stat_splitter_field_splitter: "-",
+        stat_splitter_field_splitter_field_header_determiner: ": ",
+        stat_spliiter_expectted_fields_count: 6
         },
+    "Completions-AttemptsNet yards per pass playSacked: Number-YardsHad intercepted": {
+        stat_splitter_type: stat_splitter_type_split,
+        stat_splitter_ignore_fields: "<br/>",
+        stat_splitter_key_prepend: None,
+        stat_splitter_field_splitter: "-",
+        stat_splitter_field_splitter_field_header_determiner: None,
+        stat_spliiter_expectted_fields_count: 6
+        }
 
 }
 
@@ -222,11 +227,9 @@ def get_team_page(team_url: str, year: int = None) -> Optional[BeautifulSoup]:
 def get_team_games(team_url: str, year: int) -> list[dict]:
     print(f"Getting games for team {team_url} in year {year}")
     soup = get_team_page(team_url, year)
-    # print(f"  get_team_page: {soup}")
     if (soup is None):
         print("  Failed to get team page.")
         return None
-    # print(f"    Soup: {soup}")
     print("getting schedule table")
     teams_schedule = soup.find_all("table", class_="schedule") 
     if (teams_schedule is None or teams_schedule[0] is None):
@@ -242,7 +245,6 @@ def get_team_games(team_url: str, year: int) -> list[dict]:
         opponent_name = None
         opponent_link = None
         print(f"  Processing row")
-        # search row for the bullet marker "•"
         row_text = row.get_text()
         
         if "•" in row_text:
@@ -250,15 +252,12 @@ def get_team_games(team_url: str, year: int) -> list[dict]:
             anchors = row.find_all("a")
             for a in anchors:
                 if a.get_text(strip=True) == "BX":
-                    # print("    Found game link")
                     game_link=a.get("href", "").strip()
                 else:
                     if opponent_link is None:
                         opponent_link = a.get("href", "").strip()
                     if opponent_name is None:
                         opponent_name = a.get_text(strip=True)
-                    # print(f"    link text: {opponent_name}")
-                    # print(f"    link target: {opponent_link}")
             new_game = {
                 "game_link": game_link,
                 "opponent_link": opponent_link,
@@ -278,25 +277,41 @@ def get_game_page(game_url: str) -> Optional[BeautifulSoup]:
     return get_page(url)
 
 
-def get_sub_fields(cell, sub_field_splitter: str, ignore_fields: str, expected_parts_count: int) -> list[str]:
-    fields = []
+def get_child_fields(cell: dict, ignore_fields:str, strip: bool) -> list[str]:
+    children = []
     for sub_cell in cell.children:
         if ignore_fields is not None and str(sub_cell) == ignore_fields:
-            # print(f"    Ignoring sub-cell: {sub_cell}")
             continue
-        if sub_field_splitter is not None and sub_field_splitter in sub_cell.get_text():
-            parts = sub_cell.get_text(strip=True).split(sub_field_splitter)
-            empty_string_index = parts.index("") if "" in parts else None
-            if empty_string_index is not None:
-                parts.pop(empty_string_index)
-                if len(parts) > empty_string_index:
-                    parts[empty_string_index] = sub_field_splitter + parts[empty_string_index]
-            pprint.pp(f"    Splitting sub-cell into parts: {parts}")
+        children.append(sub_cell.get_text(strip=strip) if hasattr(sub_cell, "get_text") else str(sub_cell))
+    if len(children) == 0:
+        children.append(cell.get_text(strip=strip) if hasattr(cell, "get_text") else str(cell))
+    return children
+
+
+def get_child_parts_non_empty(child: str, sub_field_splitter: str) -> list[str]:
+    parts = child.split(sub_field_splitter)
+    empty_string_index = parts.index("") if "" in parts else None
+    if empty_string_index is not None:
+        parts.pop(empty_string_index)
+        if len(parts) > empty_string_index:
+            parts[empty_string_index] = sub_field_splitter + parts[empty_string_index]
+    return parts;
+
+
+def get_sub_fields(cell, sub_field_splitter: str, ignore_fields: str, determiner: str, expected_parts_count: int) -> list[str]:
+    fields = []
+    children = get_child_fields(cell, ignore_fields, strip=True)
+
+    for child in children:
+        if sub_field_splitter is not None and sub_field_splitter in child:
+            parts = get_child_parts_non_empty(child, sub_field_splitter)
+            if determiner is not None:
+                parts = fix_field_names2(parts, determiner)
             fields.extend(parts)
         else:
-            fields.append(sub_cell.get_text(strip=True))
+            fields.append(child)
     if len(fields) != expected_parts_count:
-        print(f"     Incorrect split count in cell for stat {cell} (expected {expected_parts_count} but got {len(fields)})")
+        print(f"!!! Incorrect split count in cell for stat {cell} (expected {expected_parts_count} but got {len(fields)}) !!!")
         return None
     return fields
 
@@ -311,6 +326,41 @@ def get_percentage_parts(cell) -> list[str]:
             str(int(nums[-2])/int(nums[-1])) if (nums[-1] != "0") else "0"
         ]
     return []
+
+
+def fix_field_names(field_names: list[str], stat_splitting) -> list[str]:
+    if stat_splitting[stat_splitter_field_splitter_field_header_determiner] is None:
+        return field_names
+    determiner = stat_splitting[stat_splitter_field_splitter_field_header_determiner]
+    field_header = None
+    for field_name in field_names:
+        if determiner in field_name:
+            parts = field_name.split(determiner)
+            field_header = parts[0]
+            break
+    if field_header is None:
+        return field_names
+    field_names = [
+            (field_header + determiner + field_name if not field_name.startswith(field_header) else field_name)
+            for field_name in field_names
+            ]
+    return field_names
+
+
+def fix_field_names2(field_names: list[str], determiner: str) -> list[str]:
+    field_header = None
+    for field_name in field_names:
+        if determiner in field_name:
+            parts = field_name.split(determiner)
+            field_header = parts[0]
+            break
+    if field_header is None:
+        return field_names
+    field_names = [
+            (field_header + determiner + field_name if not field_name.startswith(field_header) else field_name)
+            for field_name in field_names
+            ]
+    return field_names
 
 
 def get_percentage_fields(away_stats: list[str], home_stats: list[str], stat_splitting: dict, cells) -> None:
@@ -334,20 +384,23 @@ def get_separted_fields(stat_splitting: dict, cells): # -> list[str], list[str],
     field_names = get_sub_fields(cells[1], 
                                     stat_splitting[stat_splitter_field_splitter],
                                     stat_splitting[stat_splitter_ignore_fields],
+                                    stat_splitting[stat_splitter_field_splitter_field_header_determiner],
                                     expectted_fields_count)
+    print(f"    Got field names: {field_names}")
+    print(f"    Got field names: {field_names}")
+
     print(f"    !! field_names: {field_names}")
-    if stat_splitting[stat_splitter_key_prepend] is not None:
-        field_names = [stat_splitting[stat_splitter_key_prepend] + name for name in field_names]
     away_sub_stats = get_sub_fields(cells[0],
                                     stat_splitting[stat_splitter_field_splitter],
                                     stat_splitting[stat_splitter_ignore_fields],
+                                    None,
                                     expectted_fields_count)
     home_sub_stats = get_sub_fields(cells[2],
                                     stat_splitting[stat_splitter_field_splitter],
                                     stat_splitting[stat_splitter_ignore_fields],
+                                    None,
                                     expectted_fields_count)
     return field_names, away_sub_stats, home_sub_stats
-
 
 
 def get_game_stats(game_url: str) -> Optional[dict]:
@@ -387,29 +440,15 @@ def get_game_stats(game_url: str) -> Optional[dict]:
             home_sub_stats = []
             if stat_spliting[stat_splitter_type] == stat_splitter_type_percent:
                 get_percentage_fields(away_stats, home_stats, stat_spliting, cells)
-            else:
+            else:  # stat_splitter_type_split
                 field_names, away_sub_stats, home_sub_stats = get_separted_fields(stat_spliting, cells)
+                if stat_spliting[stat_splitter_field_splitter] is None:
+                    field_names = fix_field_names(field_names, stat_spliting)
             pprint.pp(f"    field_names: {field_names}")
 
             if field_names is None or away_sub_stats is None or home_sub_stats is None:
                 print(f"     Incorrect split count in row for stat {stat} (fields={len(field_names)}, away_stats={len(away_stats)}, home_stats={len(home_stats)}), skipping")
                 continue
-            if stat_spliting[stat_splitter_field_splitter_field_header_determiner] is not None:
-                determiner = stat_spliting[stat_splitter_field_splitter_field_header_determiner]
-                field_header = None
-                print(f"         Looking for field header '{determiner}' in field names:")
-                for field_name in field_names:
-                    print(f"           Looking at {field_name}")
-                    if determiner in field_name:
-                        parts = field_name.split(determiner)
-                        field_header = parts[0]
-                        print(f"           Found field header '{field_header}' in field names")
-                        break
-                if field_header is not None:
-                    field_names = [
-                         (field_header + determiner + field_name if not field_name.startswith(field_header) else field_name)
-                         for field_name in field_names
-                         ]
 
             for i, field_name in enumerate(field_names):
                 away_stats[field_name] = away_sub_stats[i]
@@ -427,7 +466,7 @@ def get_game_stats(game_url: str) -> Optional[dict]:
     return return_object
 
 
-def undate_field_names(field_names: list[str], stat_splitting) -> list[str]:
+def update_field_names(field_names: list[str], stat_splitting) -> list[str]:
     if stat_splitting[stat_splitter_field_splitter_field_header_determiner] is not None:
         determiner = stat_splitting[stat_splitter_field_splitter_field_header_determiner]
         field_header = None
