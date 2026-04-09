@@ -17,50 +17,11 @@ from typing import Optional
 from bs4 import BeautifulSoup
 
 from parse_game_data_file import Parse_Game_Data_File
+from url_utils import Url_Utils
 
 URL_ROOT = "https://www.d3football.com/"
 URL = "https://www.d3football.com/teams/index"
 DEFAULT_SAVE_PATH = os.path.join("data", "teams_index.html")
-
-
-def fetch_url(url: str, timeout: int = 15) -> str:
-    headers = {
-        "User-Agent": "Mozilla/5.0 (compatible; d3-teams-scraper/1.0)"
-    }
-    resp = requests.get(url, headers=headers, timeout=timeout)
-    resp.raise_for_status()
-    return resp.text
-
-
-def save_html(html: str, path: str) -> None:
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(html)
-
-
-def load_html(path: str) -> str:
-    with open(path, "r", encoding="utf-8") as f:
-        return f.read()
-
-
-def get_page(url: str = DEFAULT_SAVE_PATH, force: bool = False) -> BeautifulSoup:
-    """Return a BeautifulSoup for the teams index page.
-
-    If a saved copy exists and force is False, the saved copy will be used.
-    Otherwise the page is fetched and saved to `save_path`.
-    """
-    # if not force and os.path.exists(save_path):
-    #     logging.info("Loading cached page from %s", save_path)
-    #     html = load_html(save_path)
-    # else:
-    logging.info("Fetching %s", url)
-    html = fetch_url(url)
-    # save_html(html, save_path)
-    # logging.info("Saved page to %s", save_path)
-
-    # Create parsing-ready BeautifulSoup object
-    soup = BeautifulSoup(html, "html.parser")
-    return soup
 
 
 def get_all_teams_page(url: str = DEFAULT_SAVE_PATH, force: bool = False) -> BeautifulSoup:
@@ -103,7 +64,7 @@ def get_team_page(team_url: str, year: int = None) -> Optional[BeautifulSoup]:
     url += team_url +"/"
     url += year_str
     print(f"  looking for team page at {url}")
-    return get_page(url)
+    return Url_Utils.get_page(url)
 
 
 def get_team_games(team_url: str, year: int) -> list[dict]:
@@ -156,7 +117,7 @@ def get_game_page(game_url: str) -> Optional[BeautifulSoup]:
     print(f"Getting game page for {game_url}")
     url = URL_ROOT + game_url
     print(f"  looking for game page at {url}")
-    return get_page(url)
+    return Url_Utils.get_page(url)
 
 
 def get_game_stats(game_url: str) -> Optional[dict]:
