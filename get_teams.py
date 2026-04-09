@@ -163,14 +163,13 @@ def get_game_stats(game_url: str) -> Optional[dict]:
     game_page = get_game_page(game_url)
     if game_page is None:
         print("  Failed to get game page.")
-        print("  Failed to get game page.")
-        return None
-    teams_table = game_page.find_all("table", class_="all-center")
-    if teams_table is None or len(teams_table) == 0:
-        print("  Failed to find teams info table on game page.")
         return None
     parser = Parse_Game_Data_File()
-    return parser.get_game_stats(teams_table[0])
+    stats = parser.get_game_stats(game_page)
+    score = parser.get_game_score(game_page)
+    if score:
+        stats.update(score)
+    return stats
 
 
 def get_and_save_game_stats(game_url: str, out_path: str) -> None:

@@ -1,25 +1,12 @@
 """Fetch https://www.d3football.com/teams/index and prepare it for parsing.
 
 Usage:
-  python get_teams.py         # fetch and save to data/teams_index.html (uses cache)
-  python get_teams.py --force # re-fetch and overwrite
+  python parse_game_data_file.get_game_stats()
+  python parse_game_data_file.get_game_score
 """
 from __future__ import annotations
-
-import argparse
-import json
-import logging
-import os
-import pprint
-import re
-import requests
 from typing import Optional
-
-from bs4 import BeautifulSoup
-
-URL_ROOT = "https://www.d3football.com/"
-URL = "https://www.d3football.com/teams/index"
-DEFAULT_SAVE_PATH = os.path.join("data", "teams_index.html")
+import re
 
 
 class Parse_Game_Data_File:
@@ -99,7 +86,7 @@ class Parse_Game_Data_File:
             stat_splitter_field_splitter_field_header_determiner: ": ",
             stat_spliiter_expectted_fields_count: 2
             },
-        "INTERCEPTIONS: Number-Yards": {    # does this work if yars is negative??
+        "INTERCEPTIONS: Number-Yards": {
             stat_splitter_type: stat_splitter_type_split,
             stat_splitter_ignore_fields: None,
             stat_splitter_key_prepend: None,
@@ -139,7 +126,6 @@ class Parse_Game_Data_File:
             stat_splitter_field_splitter_field_header_determiner: None,
             stat_spliiter_expectted_fields_count: 6
             }
-
     }
 
 
@@ -252,10 +238,6 @@ class Parse_Game_Data_File:
                                         stat_splitting[self.stat_splitter_ignore_fields],
                                         stat_splitting[self.stat_splitter_field_splitter_field_header_determiner],
                                         expectted_fields_count)
-        print(f"    Got field names: {field_names}")
-        print(f"    Got field names: {field_names}")
-
-        print(f"    !! field_names: {field_names}")
         away_sub_stats = self.get_sub_fields(cells[0],
                                         stat_splitting[self.stat_splitter_field_splitter],
                                         stat_splitting[self.stat_splitter_ignore_fields],
@@ -267,8 +249,6 @@ class Parse_Game_Data_File:
                                         None,
                                         expectted_fields_count)
         return field_names, away_sub_stats, home_sub_stats
-
-
 
 
     def update_field_names(self, field_names: list[str], stat_splitting) -> list[str]:
@@ -286,55 +266,81 @@ class Parse_Game_Data_File:
         return field_names
 
 
-    def get_game_stats(self, game_stats_table) -> Optional[dict]:
-        #teams_table = game_page.find_all("table", class_="all-center")
-        #if teams_table is None or len(teams_table) == 0:
-        #    print("  Failed to find teams info table on game page.")
-        #    return None
+    def process_row(self, row, away_stats, home_stats) -> None:
+        cells = row.find_all("td")
+        if len(cells) != 3:
+            print(f"     Incorrect cell count in row ({len(cells)}) of row {row}, skipping")
+            return
+
+        stat = cells[1].get_text(strip=True)
+        if stat in self.stat_splitter:
+            stat_spliting = self.stat_splitter[stat]
+            field_names = []
+            away_sub_stats = []
+            home_sub_stats = []
+            if stat_spliting[self.stat_splitter_type] == self.stat_splitter_type_percent:
+                self.get_percentage_fields(away_stats, home_stats, stat_spliting, cells)
+            else:  # stat_splitter_type_split
+                field_names, away_sub_stats, home_sub_stats = self.get_separted_fields(stat_spliting, cells)
+                if stat_spliting[self.stat_splitter_field_splitter] is None:
+                    field_names = self.fix_field_names(field_names, stat_spliting)
+
+            if field_names is None or away_sub_stats is None or home_sub_stats is None:
+                return
+
+            for i, field_name in enumerate(field_names):
+                away_stats[field_name] = away_sub_stats[i]
+                home_stats[field_name] = home_sub_stats[i]
+
+        else:
+            away_stats[stat] = cells[0].get_text(strip=True)
+            home_stats[stat] = cells[2].get_text(strip=True)
+
+
+    def get_score_from_td_cell(self, cell) -> Optional[str]:
+        spans = cell.find_all("span")
+        if spans is None or len(spans) < 1:
+            return None
+        text = spans[1].get_text(strip=True) if hasattr(spans[1], "get_text") else str(spans[1])
+        nums = re.findall(r"\d+", text)
+        if len(nums) >= 1:
+            return ''.join(nums)
+        return None
+
+    def get_game_score(self, game_page) -> Optional[dict]:
+        scores_div = game_page.find_all("div", class_="stats-wrapper clearfix")
+        if scores_div is None or len(scores_div) == 0:
+            return None
+        scores_tables = scores_div[0].find_all("table") if scores_div else None
+        if scores_tables is None or len(scores_tables) == 0:
+            return None
+
+        rows = scores_tables[0].find_all("tr")
+        if rows is None or len(rows) < 2:
+            return None
+        scores_row = rows[1]
+        scores_tds = scores_row.find_all("td")
+        away_score = self.get_score_from_td_cell(scores_tds[0])
+        home_score = self.get_score_from_td_cell(scores_tds[1])
+        return {"away": away_score,
+                "home": home_score
+                }
+
+    def get_game_stats(self, game_page) -> Optional[dict]:
+        teams_tables = game_page.find_all("table", class_="all-center")
+        if teams_tables is None or len(teams_tables) == 0:
+            return None
+
         home_stats = {}
         away_stats = {}
-        rows = game_stats_table.find_all("tr")
+        rows = teams_tables[0].find_all("tr")
         team_name_row = rows[0]
         team_names = team_name_row.find_all("th")
         team_away = team_names[0].get_text(strip=True)
         team_home = team_names[2].get_text(strip=True)
 
         for row in rows:
-            print(f"  Processing row")
-            # get the first anchor in the row
-            cells = row.find_all("td")
-            for cell in cells:
-                print(f"    Processing cell: {cell.get_text(strip="True")}")
-            if len(cells) != 3:
-                print(f"     Incorrect cell count in row ({len(cells)}), skipping")
-                continue
-
-            stat = cells[1].get_text(strip=True)
-            if stat in self.stat_splitter:
-                print(f"  Found stat with special splitting rules: {stat}")
-                stat_spliting = self.stat_splitter[stat]
-                field_names = []
-                away_sub_stats = []
-                home_sub_stats = []
-                if stat_spliting[self.stat_splitter_type] == self.stat_splitter_type_percent:
-                    self.get_percentage_fields(away_stats, home_stats, stat_spliting, cells)
-                else:  # stat_splitter_type_split
-                    field_names, away_sub_stats, home_sub_stats = self.get_separted_fields(stat_spliting, cells)
-                    if stat_spliting[self.stat_splitter_field_splitter] is None:
-                        field_names = self.fix_field_names(field_names, stat_spliting)
-                pprint.pp(f"    field_names: {field_names}")
-
-                if field_names is None or away_sub_stats is None or home_sub_stats is None:
-                    print(f"     Incorrect split count in row for stat {stat} (fields={len(field_names)}, away_stats={len(away_stats)}, home_stats={len(home_stats)}), skipping")
-                    continue
-
-                for i, field_name in enumerate(field_names):
-                    away_stats[field_name] = away_sub_stats[i]
-                    home_stats[field_name] = home_sub_stats[i]
-
-            else:
-                away_stats[stat] = cells[0].get_text(strip=True)
-                home_stats[stat] = cells[2].get_text(strip=True)
+            self.process_row(row, away_stats, home_stats)
 
         return_object = {}
         return_object["away_name"] = team_away
