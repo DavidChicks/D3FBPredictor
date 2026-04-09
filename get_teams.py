@@ -286,6 +286,11 @@ def get_sub_fields(cell, sub_field_splitter: str, ignore_fields: str, expected_p
             continue
         if sub_field_splitter is not None and sub_field_splitter in sub_cell.get_text():
             parts = sub_cell.get_text(strip=True).split(sub_field_splitter)
+            empty_string_index = parts.index("") if "" in parts else None
+            if empty_string_index is not None:
+                parts.pop(empty_string_index)
+                if len(parts) > empty_string_index:
+                    parts[empty_string_index] = sub_field_splitter + parts[empty_string_index]
             pprint.pp(f"    Splitting sub-cell into parts: {parts}")
             fields.extend(parts)
         else:
@@ -306,6 +311,43 @@ def get_percentage_parts(cell) -> list[str]:
             str(int(nums[-2])/int(nums[-1])) if (nums[-1] != "0") else "0"
         ]
     return []
+
+
+def get_percentage_fields(away_stats: list[str], home_stats: list[str], stat_splitting: dict, cells) -> None:
+    cell_type = type(cells[0])
+    name = cells[1].get_text(strip=True)
+    if stat_splitter_key_postremove in stat_splitting:
+        name = name.replace(stat_splitting[stat_splitter_key_postremove], "")
+    name = name.strip()
+    values_away = get_percentage_parts(cells[0])
+    values_home = get_percentage_parts(cells[2])
+    away_stats[name + stat_splitting[stat_splitter_key_success]] = values_away[0]
+    home_stats[name + stat_splitting[stat_splitter_key_success]] = values_home[0]
+    away_stats[name + " Total"] = values_away[1]
+    home_stats[name + " Total"] = values_home[1]
+    away_stats[name + stat_splitting[stat_splitter_key_postremove]] = values_away[2]
+    home_stats[name + stat_splitting[stat_splitter_key_postremove]] = values_home[2]
+
+
+def get_separted_fields(stat_splitting: dict, cells): # -> list[str], list[str], list[str]:
+    expectted_fields_count = stat_splitting[stat_spliiter_expectted_fields_count]
+    field_names = get_sub_fields(cells[1], 
+                                    stat_splitting[stat_splitter_field_splitter],
+                                    stat_splitting[stat_splitter_ignore_fields],
+                                    expectted_fields_count)
+    print(f"    !! field_names: {field_names}")
+    if stat_splitting[stat_splitter_key_prepend] is not None:
+        field_names = [stat_splitting[stat_splitter_key_prepend] + name for name in field_names]
+    away_sub_stats = get_sub_fields(cells[0],
+                                    stat_splitting[stat_splitter_field_splitter],
+                                    stat_splitting[stat_splitter_ignore_fields],
+                                    expectted_fields_count)
+    home_sub_stats = get_sub_fields(cells[2],
+                                    stat_splitting[stat_splitter_field_splitter],
+                                    stat_splitting[stat_splitter_ignore_fields],
+                                    expectted_fields_count)
+    return field_names, away_sub_stats, home_sub_stats
+
 
 
 def get_game_stats(game_url: str) -> Optional[dict]:
@@ -344,37 +386,9 @@ def get_game_stats(game_url: str) -> Optional[dict]:
             away_sub_stats = []
             home_sub_stats = []
             if stat_spliting[stat_splitter_type] == stat_splitter_type_percent:
-                cell_type = type(cells[0])
-                name = cells[1].get_text(strip=True)
-                if stat_splitter_key_postremove in stat_spliting:
-                    name = name.replace(stat_spliting[stat_splitter_key_postremove], "")
-                name = name.strip()
-                values_away = get_percentage_parts(cells[0])
-                values_home = get_percentage_parts(cells[2])
-                away_stats[name + stat_spliting[stat_splitter_key_success]] = values_away[0]
-                home_stats[name + stat_spliting[stat_splitter_key_success]] = values_home[0]
-                away_stats[name + " Total"] = values_away[1]
-                home_stats[name + " Total"] = values_home[1]
-                away_stats[name + stat_spliting[stat_splitter_key_postremove]] = values_away[2]
-                home_stats[name + stat_spliting[stat_splitter_key_postremove]] = values_home[2]
-
+                get_percentage_fields(away_stats, home_stats, stat_spliting, cells)
             else:
-                expectted_fields_count = stat_spliting[stat_spliiter_expectted_fields_count]
-                field_names = get_sub_fields(cells[1], 
-                                             stat_spliting[stat_splitter_field_splitter],
-                                             stat_spliting[stat_splitter_ignore_fields],
-                                             expectted_fields_count)
-                if stat_spliting[stat_splitter_key_prepend] is not None:
-                    field_names = [stat_spliting[stat_splitter_key_prepend] + name for name in field_names]
-                away_sub_stats = get_sub_fields(cells[0],
-                                                stat_spliting[stat_splitter_field_splitter],
-                                                stat_spliting[stat_splitter_ignore_fields],
-                                                expectted_fields_count)
-                home_sub_stats = get_sub_fields(cells[2],
-                                                stat_spliting[stat_splitter_field_splitter],
-                                                stat_spliting[stat_splitter_ignore_fields],
-                                                expectted_fields_count)
-
+                field_names, away_sub_stats, home_sub_stats = get_separted_fields(stat_spliting, cells)
             pprint.pp(f"    field_names: {field_names}")
 
             if field_names is None or away_sub_stats is None or home_sub_stats is None:
@@ -392,10 +406,6 @@ def get_game_stats(game_url: str) -> Optional[dict]:
                         print(f"           Found field header '{field_header}' in field names")
                         break
                 if field_header is not None:
-                    # for field_name in field_names:
-                    #     if not field_name.startswith(field_header):
-                    #         field_name = field_header + determiner + field_name
-                    #         print(f"     new field name '{field_name}")
                     field_names = [
                          (field_header + determiner + field_name if not field_name.startswith(field_header) else field_name)
                          for field_name in field_names
