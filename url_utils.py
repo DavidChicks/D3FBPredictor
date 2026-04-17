@@ -22,6 +22,7 @@ class Url_Utils:
 
     @staticmethod
     def fetch_url(url: str, timeout: int = 15) -> str:
+        print(f"Fetching URL: {url}")
         headers = {
             "User-Agent": "Mozilla/5.0 (compatible; d3-teams-scraper/1.0)"
         }
@@ -41,9 +42,15 @@ class Url_Utils:
         with open(path, "r", encoding="utf-8") as f:
             return f.read()
 
+    #@staticmethod
+    #def get_file_root_from_path(path: str) -> str:
+    #    filename = os.path.basename(path)
+    #    without_extension = os.path.splitext(filename)[0]
+    #    return without_extension
+
 
     @staticmethod
-    def get_page(url: str = DEFAULT_SAVE_PATH, force: bool = False) -> BeautifulSoup:
+    def get_page(url: str, force: bool = False) -> BeautifulSoup:
         """Return a BeautifulSoup for the teams index page.
 
         If a saved copy exists and force is False, the saved copy will be used.
@@ -62,3 +69,18 @@ class Url_Utils:
         soup = BeautifulSoup(html, "html.parser")
         return soup
 
+    def get_team_page(team: str, year: str) -> Optional[BeautifulSoup]:
+        print(f"Getting team page for {team} (year={year})")
+        full_url = Url_Utils.URL_ROOT + "teams/" + team + "/" + year + "/index"
+        print(f"  looking for team page at {full_url}")
+        return Url_Utils.get_page(full_url)
+
+
+    def get_game_page(game_url: str, year: str=None) -> Optional[BeautifulSoup]:
+        print(f" -- etting game page for {game_url}")
+        #if year is None or len(year) == 0:
+        #    year = game_url[4:]
+        ## https://www.d3football.com/seasons/2025/boxscores/20251115_82vt.xml
+        url = Url_Utils.URL_ROOT + game_url
+        print(f"  looking for game page at {url}")
+        return Url_Utils.get_page(url)

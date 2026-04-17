@@ -129,7 +129,7 @@ class Parse_Game_Data_File:
     }
 
 
-    def get_child_fields(self, cell: dict, ignore_fields:str, strip: bool) -> list[str]:
+    def __get_child_fields(self, cell: dict, ignore_fields:str, strip: bool) -> list[str]:
         children = []
         for sub_cell in cell.children:
             if ignore_fields is not None and str(sub_cell) == ignore_fields:
@@ -140,7 +140,7 @@ class Parse_Game_Data_File:
         return children
 
 
-    def get_child_parts_non_empty(self, child: str, sub_field_splitter: str) -> list[str]:
+    def __get_child_parts_non_empty(self, child: str, sub_field_splitter: str) -> list[str]:
         parts = child.split(sub_field_splitter)
         empty_string_index = parts.index("") if "" in parts else None
         if empty_string_index is not None:
@@ -150,15 +150,15 @@ class Parse_Game_Data_File:
         return parts;
 
 
-    def get_sub_fields(self, cell, sub_field_splitter: str, ignore_fields: str, determiner: str, expected_parts_count: int) -> list[str]:
+    def __get_sub_fields(self, cell, sub_field_splitter: str, ignore_fields: str, determiner: str, expected_parts_count: int) -> list[str]:
         fields = []
-        children = self.get_child_fields(cell, ignore_fields, strip=True)
+        children = self.__get_child_fields(cell, ignore_fields, strip=True)
 
         for child in children:
             if sub_field_splitter is not None and sub_field_splitter in child:
-                parts = self.get_child_parts_non_empty(child, sub_field_splitter)
+                parts = self.__get_child_parts_non_empty(child, sub_field_splitter)
                 if determiner is not None:
-                    parts = self.fix_field_names2(parts, determiner)
+                    parts = self.__fix_field_names2(parts, determiner)
                 fields.extend(parts)
             else:
                 fields.append(child)
@@ -168,7 +168,7 @@ class Parse_Game_Data_File:
         return fields
 
 
-    def get_percentage_parts(self, cell) -> list[str]:
+    def __get_percentage_parts(self, cell) -> list[str]:
         text = cell.get_text(strip=True) if hasattr(cell, "get_text") else str(cell)
         nums = re.findall(r"\d+", text)
         if len(nums) >= 2:
@@ -180,7 +180,7 @@ class Parse_Game_Data_File:
         return []
 
 
-    def fix_field_names(self, field_names: list[str], stat_splitting) -> list[str]:
+    def __fix_field_names(self, field_names: list[str], stat_splitting) -> list[str]:
         if stat_splitting[self.stat_splitter_field_splitter_field_header_determiner] is None:
             return field_names
         determiner = stat_splitting[self.stat_splitter_field_splitter_field_header_determiner]
@@ -199,7 +199,7 @@ class Parse_Game_Data_File:
         return field_names
 
 
-    def fix_field_names2(self, field_names: list[str], determiner: str) -> list[str]:
+    def __fix_field_names2(self, field_names: list[str], determiner: str) -> list[str]:
         field_header = None
         for field_name in field_names:
             if determiner in field_name:
@@ -215,14 +215,14 @@ class Parse_Game_Data_File:
         return field_names
 
 
-    def get_percentage_fields(self, away_stats: list[str], home_stats: list[str], stat_splitting: dict, cells) -> None:
+    def __get_percentage_fields(self, away_stats: list[str], home_stats: list[str], stat_splitting: dict, cells) -> None:
         cell_type = type(cells[0])
         name = cells[1].get_text(strip=True)
         if self.stat_splitter_key_postremove in stat_splitting:
             name = name.replace(stat_splitting[self.stat_splitter_key_postremove], "")
         name = name.strip()
-        values_away = self.get_percentage_parts(cells[0])
-        values_home = self.get_percentage_parts(cells[2])
+        values_away = self.__get_percentage_parts(cells[0])
+        values_home = self.__get_percentage_parts(cells[2])
         away_stats[name + stat_splitting[self.stat_splitter_key_success]] = values_away[0]
         home_stats[name + stat_splitting[self.stat_splitter_key_success]] = values_home[0]
         away_stats[name + " Total"] = values_away[1]
@@ -231,19 +231,19 @@ class Parse_Game_Data_File:
         home_stats[name + stat_splitting[self.stat_splitter_key_postremove]] = values_home[2]
 
 
-    def get_separted_fields(self, stat_splitting: dict, cells): # -> list[str], list[str], list[str]:
+    def __get_separted_fields(self, stat_splitting: dict, cells): # -> list[str], list[str], list[str]:
         expectted_fields_count = stat_splitting[self.stat_spliiter_expectted_fields_count]
-        field_names = self.get_sub_fields(cells[1], 
+        field_names = self.__get_sub_fields(cells[1], 
                                         stat_splitting[self.stat_splitter_field_splitter],
                                         stat_splitting[self.stat_splitter_ignore_fields],
                                         stat_splitting[self.stat_splitter_field_splitter_field_header_determiner],
                                         expectted_fields_count)
-        away_sub_stats = self.get_sub_fields(cells[0],
+        away_sub_stats = self.__get_sub_fields(cells[0],
                                         stat_splitting[self.stat_splitter_field_splitter],
                                         stat_splitting[self.stat_splitter_ignore_fields],
                                         None,
                                         expectted_fields_count)
-        home_sub_stats = self.get_sub_fields(cells[2],
+        home_sub_stats = self.__get_sub_fields(cells[2],
                                         stat_splitting[self.stat_splitter_field_splitter],
                                         stat_splitting[self.stat_splitter_ignore_fields],
                                         None,
@@ -251,22 +251,22 @@ class Parse_Game_Data_File:
         return field_names, away_sub_stats, home_sub_stats
 
 
-    def update_field_names(self, field_names: list[str], stat_splitting) -> list[str]:
-        if stat_splitting[self.stat_splitter_field_splitter_field_header_determiner] is not None:
-            determiner = stat_splitting[self.stat_splitter_field_splitter_field_header_determiner]
-            field_header = None
-            for field_name in field_names:
-                if field_name.startswith(determiner):
-                    field_header = field_name
-                    break
-            if field_header is not None:
-                for field_name in field_names:
-                    if not field_name.startswith(determiner):
-                        field_name = field_header + determiner + field_name
-        return field_names
+    #def __update_field_names(self, field_names: list[str], stat_splitting) -> list[str]:
+    #    if stat_splitting[self.stat_splitter_field_splitter_field_header_determiner] is not None:
+    #        determiner = stat_splitting[self.stat_splitter_field_splitter_field_header_determiner]
+    #        field_header = None
+    #        for field_name in field_names:
+    #            if field_name.startswith(determiner):
+    #                field_header = field_name
+    #                break
+    #        if field_header is not None:
+    #            for field_name in field_names:
+    #                if not field_name.startswith(determiner):
+    #                    field_name = field_header + determiner + field_name
+    #    return field_names
 
 
-    def process_row(self, row, away_stats, home_stats) -> None:
+    def __process_row(self, row, away_stats, home_stats) -> None:
         cells = row.find_all("td")
         if len(cells) != 3:
             print(f"     Incorrect cell count in row ({len(cells)}) of row {row}, skipping")
@@ -279,11 +279,11 @@ class Parse_Game_Data_File:
             away_sub_stats = []
             home_sub_stats = []
             if stat_spliting[self.stat_splitter_type] == self.stat_splitter_type_percent:
-                self.get_percentage_fields(away_stats, home_stats, stat_spliting, cells)
+                self.__get_percentage_fields(away_stats, home_stats, stat_spliting, cells)
             else:  # stat_splitter_type_split
-                field_names, away_sub_stats, home_sub_stats = self.get_separted_fields(stat_spliting, cells)
+                field_names, away_sub_stats, home_sub_stats = self.__get_separted_fields(stat_spliting, cells)
                 if stat_spliting[self.stat_splitter_field_splitter] is None:
-                    field_names = self.fix_field_names(field_names, stat_spliting)
+                    field_names = self.__fix_field_names(field_names, stat_spliting)
 
             if field_names is None or away_sub_stats is None or home_sub_stats is None:
                 return
@@ -297,7 +297,7 @@ class Parse_Game_Data_File:
             home_stats[stat] = cells[2].get_text(strip=True)
 
 
-    def get_score_from_td_cell(self, cell) -> Optional[str]:
+    def __get_score_from_td_cell(self, cell) -> Optional[str]:
         spans = cell.find_all("span")
         if spans is None or len(spans) < 1:
             return None
@@ -320,8 +320,8 @@ class Parse_Game_Data_File:
             return None
         scores_row = rows[1]
         scores_tds = scores_row.find_all("td")
-        away_score = self.get_score_from_td_cell(scores_tds[0])
-        home_score = self.get_score_from_td_cell(scores_tds[1])
+        away_score = self.__get_score_from_td_cell(scores_tds[0])
+        home_score = self.__get_score_from_td_cell(scores_tds[1])
         return {"away": away_score,
                 "home": home_score
                 }
@@ -340,7 +340,7 @@ class Parse_Game_Data_File:
         team_home = team_names[2].get_text(strip=True)
 
         for row in rows:
-            self.process_row(row, away_stats, home_stats)
+            self.__process_row(row, away_stats, home_stats)
 
         return_object = {}
         return_object["away_name"] = team_away
