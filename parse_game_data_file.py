@@ -252,21 +252,6 @@ class Parse_Game_Data_File:
         return field_names, away_sub_stats, home_sub_stats
 
 
-    #def __update_field_names(self, field_names: list[str], stat_splitting) -> list[str]:
-    #    if stat_splitting[self.stat_splitter_field_splitter_field_header_determiner] is not None:
-    #        determiner = stat_splitting[self.stat_splitter_field_splitter_field_header_determiner]
-    #        field_header = None
-    #        for field_name in field_names:
-    #            if field_name.startswith(determiner):
-    #                field_header = field_name
-    #                break
-    #        if field_header is not None:
-    #            for field_name in field_names:
-    #                if not field_name.startswith(determiner):
-    #                    field_name = field_header + determiner + field_name
-    #    return field_names
-
-
     def __process_row(self, row, away_stats, home_stats) -> None:
         cells = row.find_all("td")
         if len(cells) != 3:
@@ -349,5 +334,4 @@ class Parse_Game_Data_File:
         return_object["away_stats"] = away_stats
         return_object["home_stats"] = home_stats
         return return_object
-
 

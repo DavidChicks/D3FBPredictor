@@ -8,74 +8,15 @@ from __future__ import annotations
 
 import argparse
 import json
-import logging
-import os
-import pprint
-import re
+#import logging
 import requests
 from typing import Optional
-from bs4 import BeautifulSoup
 
 from file_handler import File_Handler
 from teams import Teams #, get_team_page, get_team_games
-from parse_game_data_file import Parse_Game_Data_File
-from url_utils import Url_Utils
 from year_games import Year_Games
-import year_games
 
 
-URL_ROOT = "https://www.d3football.com/"
-URL = "https://www.d3football.com/teams/index"
-DEFAULT_SAVE_PATH = os.path.join("data", "teams_index.html")
-
-
-#def get_game_page(game_url: str) -> Optional[BeautifulSoup]:
-#    print(f"Getting game page for {game_url}")
-#    url = URL_ROOT + game_url
-#    print(f"  looking for game page at {url}")
-#    return Url_Utils.get_page(url)
-
-
-#def get_game_stats(game_url: str) -> Optional[dict]:
-#    game_page = get_game_page(game_url)
-#    if game_page is None:
-#        print("  Failed to get game page.")
-#        return None
-#    parser = Parse_Game_Data_File()
-#    stats = parser.get_game_stats(game_page)
-#    score = parser.get_game_score(game_page)
-#    if score:
-#        stats.update(score)
-#    return stats
-
-
-#def get_and_save_game_stats(game_url: str, out_path: str) -> None:
-#    stats = get_game_stats(game_url)
-#    end = game_url.split("/")[-1]
-#    parts = end.split(".")[0].split("_")
-#    # ensure parts[0] is 8 characters long and all digits (YYYYMMDD)
-#    if not parts:
-#        print(f"Unexpected file name format; no parts found in '{without_extension}'")
-#        return stats
-#
-#    if not (len(parts[0]) == 8 and parts[0].isdigit()):
-#        print(f"Unexpected file name format; expected parts[0] to be 8 digits but got: {parts[0]!r}")
-#
-#    year_prefix = parts[0][:4]
-#    date = parts[0][4:]
-#    
-#    file_path = os.path.join(out_path, f"{year_prefix}", f"{year_prefix}_{date}_{parts[1]}.json")
-#
-#    # save the stats object as JSON to file_path
-#    try:
-#        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-#        with open(file_path, "w", encoding="utf-8") as f:
-#            json.dump(stats, f, indent=2, ensure_ascii=False)
-#        print(f"Saved stats to {file_path}")
-#    except Exception as e:
-#        print(f"Failed to save stats to {file_path}: {e}")
-#
-#    return stats
 
 def get_all_teams() -> dict[str, str]:
     teams = Teams()
@@ -117,13 +58,6 @@ def main() -> None:
 
     print(f"year_games: {year_games}")
     games = year_games.get_all_game_for_team_in_year("linfield", year)
-    # print(f"Found games for Linfield in 2021")
-    # print(f"Found {games}")
-    # pprint.pp(games)
-
-    # game_stats = teams.get_and_save_game_stats(20141213_katn.xml", os.path.join("data", "games"))
-    # pprint.pp(game_stats)
-
 
 if __name__ == "__main__":
     main()

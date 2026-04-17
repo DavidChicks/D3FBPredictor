@@ -12,11 +12,6 @@ class Year_Games():
     file_handler = File_Handler()
     teams = Teams()
 
-    #def __init_(self):
-    #    self.year = None
-    #    self.all_teams = None
-    #    # self.file_handler = File_Handler()
-
 
     def get_all_game_for_team_in_year(self, team: str, year: str, force=False):
         if (self.all_teams is None):
@@ -25,14 +20,10 @@ class Year_Games():
                 print("Failed to load teams data.")
                 return []
 
-        # team_url_part = self.all_teams.get(team)
-
         games = self.teams.get_team_games(team, year)
         print(f"Games: {games}")
-        # Url_Utils.get_team_page(team_url_part, year)
         all_games_data = []
         for game in games:
-            # print(f"Processing game: {game}")
             if "game_link" not in game or "opponent_name" not in game or game["game_link"] is None or game["opponent_name"] is None:
                 print(f"Skipping game with missing data: {game}")
                 continue
@@ -40,22 +31,16 @@ class Year_Games():
             game_file_name = game["game_link"].split("/")[-1]
             game_data["game_file"] = game_file_name
             opponent_normalized = Utils.normalize_name(game["opponent_name"])
-            print(f"Normalized opponent name: '{game['opponent_name']}' -> '{opponent_normalized}'")
             game_data["opponent"] = opponent_normalized
             week = self.__get_week_from_file_name(game_file_name)
             if week is None:
                 print(f"Failed to extract week from game file name: {game_file_name}")
                 continue
             # add this game's data to the list for that week
-            print("------------------------------")
-            print(f"    Adding game data for week {week}: {game_data}")
             Utils.add_element_to_list_at_index(all_games_data, week, game_data)
 
-            #self.teams.get_game_stats(game["game_link"])
-            print(f"    Fetching and saving game stats for game link: {game['game_link']}")
             self.teams.get_and_save_game_stats(game["game_link"])
 
-        # TODO: save game_data to a JSON file named after the team and year, e.g. "data/games/2024/team_name.json"
         # TODO: keep existing data if the file already exists, and only add new games to it (don't overwrite existing data)
         normalized_name = Utils.normalize_name(team)
         self.file_handler.update_team_file(normalized_name, year, all_games_data)
@@ -79,25 +64,18 @@ class Year_Games():
             print(f"Failed to extract date from file name: {file_name}: year={year}, month={month}, day={day}")
             return None
         
-        print(f"Extracted date from file name: year={year}, month={month}, day={day}")
         total_days = (month - 9) * 30 + day
         if month > 10: # October has 31 days, so we need to account for that
             total_days += 1
 
-        print(f"Total days since September 1: {total_days}")
-        # Increase by 1 for each year after 1999
         if year and year > 1999:
             extra_days = (year - 1999)
-
             # If leap year, increase by 2
             leap_days = int((year - 1996) / 4) # - (year_int - 2000) // 100 + (year_int - 2000) // 400
             extra_days += leap_days
-            #print(f"    Adding leap days 1: {extra_days}")
             if extra_days >= 7:
                 extra_days = extra_days % 7
-            #print(f"    Adding leap days 2: {extra_days}")
             total_days += extra_days
 
-        #print(f"Total days since September 1: {total_days}")
         return int(total_days / 7)
 

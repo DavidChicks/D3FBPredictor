@@ -38,14 +38,11 @@ class File_Handler:
 
 
     def save_all_teams(self, teams: dict) -> None:
-        print("Saving all teams...")
         try:
             self.__ensure_all_dirs()
             out_path = os.path.join(".", DATA_ROOT, TEAMS_FOLDER, "all_teams.json")
-            print(f"Output path for all teams: {out_path}")
             with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(teams, f, indent=2, ensure_ascii=False)
-            print(f"Saved all teams to {out_path}")
         except Exception as e:
             print(f"Failed to save all teams to {out_path}: {e}")
 
@@ -55,10 +52,8 @@ class File_Handler:
         os.makedirs(os.path.dirname(data_dir), exist_ok=True)
         teams_folder = os.path.join(data_dir, TEAMS_FOLDER)
         os.makedirs(os.path.dirname(teams_folder), exist_ok=True)
-        print(f"Ensured teams folder exists at {teams_folder}")
         games_dir = os.path.join(data_dir, GAMES_FOLDER)
         os.makedirs(os.path.dirname(games_dir), exist_ok=True)
-        print(f"Ensured games folder exists at {games_dir}")
         #for year in range(1999, 2026):
         #    game_year_dir = os.path.join(games_dir, str(year))
         #    os.makedirs(os.path.dirname(game_year_dir), exist_ok=True)
@@ -89,45 +84,33 @@ class File_Handler:
             print(f"Team file not found for {team_name} at {team_file}, creating new file.")
             team_data = {} # {"name": team_name, "games": {}}
         else:
-            print(f"Team file found for {team_name}, year: {year}; year_games: {year_games}.")
             try:
                 with open(team_file, "r", encoding="utf-8") as f:
                     team_data = json.load(f)
-                print(f"Loaded existing team data for {team_name} from {team_file}")
             except Exception as e:
                 print(f"Failed to load existing team data for {team_name} from {team_file}: {e}")
                 team_data = {} # {"name": team_name, "games": {}}
 
         team_data[year] = year_games
-        #if "games" not in team_data:
-        #    team_data["games"] = {}
-        #if year not in team_data["games"]:
-        #    team_data["games"][year] = []
-        #team_data["games"][year].append(game_data)
         try:
             with open(team_file, "w", encoding="utf-8") as f:
                 json.dump(team_data, f, indent=2, ensure_ascii=False)
-            print(f"Updated team file for {team_name} at {team_file}")
         except Exception as e:
             print(f"Failed to update team file for {team_name} at {team_file}: {e}")
 
+
     def save_game_file(self, game_url: str, stats: dict):
-        print(f"Saving game stats for {game_url}...")
         game_file_name = game_url.split("/")[-1].split(".")[0] + ".json"
         year = game_file_name[:4]
-        print(f"Extracted year '{year}' from game file name '{game_file_name}'")
-        # print(f"Ensured teams folder exists at {teams_folder}")
         self.__ensure_game_year_dir(year)
         games_year_dir = os.path.join(DATA_ROOT, GAMES_FOLDER, year)
         os.makedirs(os.path.dirname(games_year_dir), exist_ok=True)
         file_path = os.path.join(games_year_dir, game_file_name)
-        print(f"Output path for game stats: {file_path}")
 
         try:
             os.makedirs(os.path.dirname(games_year_dir), exist_ok=True)
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(stats, f, indent=2, ensure_ascii=False)
-            print(f"Saved stats to {file_path}")
         except Exception as e:
             print(f"Failed to save stats to {file_path}: {e}")
 
