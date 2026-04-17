@@ -15,7 +15,7 @@ class Teams:
     file_handler = File_Handler()
     all_teams = None
 
-    def get_team_url_part(self, team: str) -> str:
+    def __get_team_url_part(self, team: str) -> str:
         if (self.all_teams is None):
             self.all_teams = self.file_handler.get_all_teams()
             if (self.all_teams is None):
@@ -80,7 +80,7 @@ class Teams:
 
     def get_team_games(self, team: str, year: int) -> list[dict]:
         #print(f"Getting games for team {team} in year {year}")
-        team_url_part = self.get_team_url_part(team)
+        team_url_part = self.__get_team_url_part(team)
         #print(f"  team_url_part: {team_url_part}")
         page = Url_Utils.get_team_page(team_url_part, year)
         if (page is None):
@@ -154,32 +154,32 @@ class Teams:
         file_handler.save_game_file(game_url, stats)
 
 
-    def foo_get_and_save_game_stats():
-        url_file = game_url.split("/")[-1].split(".")[0]
-        parts = url_file.split("_")
-        # ensure parts[0] is 8 characters long and all digits (YYYYMMDD)
-        if not parts:
-            print(f"Unexpected file name format; no parts found in '{without_extension}'")
-            return stats
-        if not (len(parts[0]) == 8 and parts[0].isdigit()):
-            print(f"Unexpected file name format; expected parts[0] to be 8 digits but got: {parts[0]!r}")
+    #def foo_get_and_save_game_stats():
+    #    url_file = game_url.split("/")[-1].split(".")[0]
+    #    parts = url_file.split("_")
+    #    # ensure parts[0] is 8 characters long and all digits (YYYYMMDD)
+    #    if not parts:
+    #        print(f"Unexpected file name format; no parts found in '{without_extension}'")
+    #        return stats
+    #    if not (len(parts[0]) == 8 and parts[0].isdigit()):
+    #        print(f"Unexpected file name format; expected parts[0] to be 8 digits but got: {parts[0]!r}")
 
-        year_prefix = parts[0][:4]
-        date = parts[0][4:]
+    #    year_prefix = parts[0][:4]
+    #    date = parts[0][4:]
     
-        # file_path = os.path.join(out_path, f"{year_prefix}", f"{year_prefix}_{date}_{parts[1]}.json")
-        file_path = os.path.join(out_path, f"{year_prefix}", f"{url_file}.json")
+    #    # file_path = os.path.join(out_path, f"{year_prefix}", f"{year_prefix}_{date}_{parts[1]}.json")
+    #    file_path = os.path.join(out_path, f"{year_prefix}", f"{url_file}.json")
 
-        # save the stats object as JSON to file_path
-        try:
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            with open(file_path, "w", encoding="utf-8") as f:
-                json.dump(stats, f, indent=2, ensure_ascii=False)
-            print(f"Saved stats to {file_path}")
-        except Exception as e:
-            print(f"Failed to save stats to {file_path}: {e}")
+    #    # save the stats object as JSON to file_path
+    #    try:
+    #        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    #        with open(file_path, "w", encoding="utf-8") as f:
+    #            json.dump(stats, f, indent=2, ensure_ascii=False)
+    #        print(f"Saved stats to {file_path}")
+    #    except Exception as e:
+    #        print(f"Failed to save stats to {file_path}: {e}")
 
-        return stats
+    #    return stats
 
 
     # normalize_name has been moved to utils.Utils.normalize_name

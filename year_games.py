@@ -42,14 +42,14 @@ class Year_Games():
             opponent_normalized = Utils.normalize_name(game["opponent_name"])
             print(f"Normalized opponent name: '{game['opponent_name']}' -> '{opponent_normalized}'")
             game_data["opponent"] = opponent_normalized
-            week = self.get_week_from_file_name(game_file_name)
+            week = self.__get_week_from_file_name(game_file_name)
             if week is None:
                 print(f"Failed to extract week from game file name: {game_file_name}")
                 continue
             # add this game's data to the list for that week
             print("------------------------------")
             print(f"    Adding game data for week {week}: {game_data}")
-            self.add_element_to_list_at_index(all_games_data, week, game_data)
+            Utils.add_element_to_list_at_index(all_games_data, week, game_data)
 
             #self.teams.get_game_stats(game["game_link"])
             print(f"    Fetching and saving game stats for game link: {game['game_link']}")
@@ -61,7 +61,7 @@ class Year_Games():
         self.file_handler.update_team_file(normalized_name, year, all_games_data)
 
 
-    def get_week_from_file_name(self, file_name: str) -> int:
+    def __get_week_from_file_name(self, file_name: str) -> int:
         # extract the week from a file name like "20240907_linfield_wooster.json"
         parts = file_name.split(".")[0].split("_")
         if len(parts) < 2:
@@ -101,19 +101,3 @@ class Year_Games():
         #print(f"Total days since September 1: {total_days}")
         return int(total_days / 7)
 
-    def add_element_to_list_at_index(self, lst: list, index: int, element):
-        #print(f"  Adding element at index {index}: {element}")
-        while len(lst) <= index:
-            lst.append(None)
-        lst[index] = element
-
-
-    def foo():
-        for team in teams:
-            team_url = teams[team]
-            team_page = get_team_page(team_url, year)
-            if team_page is None:
-                print(f"Failed to get page for team {team} ({team_url})")
-                continue
-            games = parse_team_games(team_page)
-            self.games.extend(games)
