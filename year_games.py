@@ -1,6 +1,7 @@
 from ast import Dict
 from calendar import Day
 
+from all_teams import All_Teams
 from file_handler import File_Handler
 from teams import Teams
 from utils import Utils
@@ -8,20 +9,21 @@ from url_utils import Url_Utils
 
 class Year_Games():
     year = None 
-    all_teams = None
     file_handler = File_Handler()
     teams = Teams()
 
 
-    def get_all_game_for_team_in_year(self, team: str, year: str, force=False):
-        if (self.all_teams is None):
-            self.all_teams = self.file_handler.get_all_teams()
-            if (self.all_teams is None):
-                print("Failed to load teams data.")
-                return []
+    def get_all_game_for_team_in_year(self, team_raw: str, year: str, force=False):
+        all_teams = All_Teams.get_all_teams()
+        team_name = Utils.normalize_name(team_raw)
+        if team_name not in all_teams:
+            print(f"Unknown team, {team_raw} ({team_name})")
+            return []
 
-        games = self.teams.get_team_games(team, year)
-        print(f"Games: {games}")
+        games = self.teams.get_team_games(team_name, year)
+        if games is None:
+            print(f"Failed to find games, skipping year, {year} for team, {team}")
+            return
         all_games_data = []
         for game in games:
             if "game_link" not in game or "opponent_name" not in game or game["game_link"] is None or game["opponent_name"] is None:
@@ -42,8 +44,14 @@ class Year_Games():
             self.teams.get_and_save_game_stats(game["game_link"])
 
         # TODO: keep existing data if the file already exists, and only add new games to it (don't overwrite existing data)
-        normalized_name = Utils.normalize_name(team)
-        self.file_handler.update_team_file(normalized_name, year, all_games_data)
+        self.file_handler.update_team_file(team_name, year, all_games_data)
+
+
+    def get_all_games_for_all_team_in_year(self, year: str, force=False):
+        all_teams = All_Teams.get_all_teams()
+        for team_name in all_teams:
+            self.get_all_game_for_team_in_year(team_name, year)
+            print(f"team_name: {team_name}")
 
 
     def __get_week_from_file_name(self, file_name: str) -> int:

@@ -56,16 +56,15 @@ class Url_Utils:
         soup = BeautifulSoup(html, "html.parser")
         return soup
 
+
+    @staticmethod
     def get_team_page(team: str, year: str) -> Optional[BeautifulSoup]:
-        print(f"Getting team page for {team} (year={year})")
         full_url = Url_Utils.URL_ROOT + "teams/" + team + "/" + year + "/index"
-        print(f"  looking for team page at {full_url}")
         return Url_Utils.get_page(full_url)
 
 
+    @staticmethod
     def get_game_page(game_url: str, year: str=None) -> Optional[BeautifulSoup]:
-        print(f" -- getting game page for {game_url}")
         ## https://www.d3football.com/seasons/2025/boxscores/20251115_82vt.xml
         url = Url_Utils.URL_ROOT + game_url
-        print(f"  looking for game page at {url}")
         return Url_Utils.get_page(url)

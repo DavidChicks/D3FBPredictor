@@ -11,6 +11,9 @@ import re
 
 
 class Parse_Game_Data_File:
+    away_team: str
+    home_team: str
+
     # keys for stat splitting rules
     stat_splitter_ignore_fields = "stat_splitter_ignore_fields"
     stat_splitter_type = "stat_splitter_type"
@@ -156,6 +159,9 @@ class Parse_Game_Data_File:
         children = self.__get_child_fields(cell, ignore_fields, strip=True)
 
         for child in children:
+            if "0  0" in child: # handle cases where the number/yards is "0  0" rather than "0-0"
+                #print(f"  ## found '0  0': '{child}'")
+                child = "0-0"
             if sub_field_splitter is not None and sub_field_splitter in child:
                 parts = self.__get_child_parts_non_empty(child, sub_field_splitter)
                 if determiner is not None:
@@ -165,6 +171,7 @@ class Parse_Game_Data_File:
                 fields.append(child)
         if len(fields) != expected_parts_count:
             print(f"!!! Incorrect split count in cell for stat {cell} (expected {expected_parts_count} but got {len(fields)}) !!!")
+            print(f"    Away Team: {self.away_team}, Home Team: {self.home_team}")
             return None
         return fields
 
@@ -255,7 +262,8 @@ class Parse_Game_Data_File:
     def __process_row(self, row, away_stats, home_stats) -> None:
         cells = row.find_all("td")
         if len(cells) != 3:
-            print(f"     Incorrect cell count in row ({len(cells)}) of row {row}, skipping")
+            if not "Statistics" in row.get_text():
+                print(f"     Incorrect cell count in row ({len(cells)}) of row {row}, skipping")
             return
 
         stat = cells[1].get_text(strip=True)
@@ -322,15 +330,15 @@ class Parse_Game_Data_File:
         rows = teams_tables[0].find_all("tr")
         team_name_row = rows[0]
         team_names = team_name_row.find_all("th")
-        team_away = team_names[0].get_text(strip=True)
-        team_home = team_names[2].get_text(strip=True)
+        self.away_team = Utils.normalize_name(team_names[0].get_text(strip=True))
+        self.home_team = Utils.normalize_name(team_names[2].get_text(strip=True))
 
         for row in rows:
             self.__process_row(row, away_stats, home_stats)
 
         return_object = {}
-        return_object["away_team"] = Utils.normalize_name(team_away)
-        return_object["home_team"] = Utils.normalize_name(team_home)
+        return_object["away_team"] = Utils.normalize_name(self.away_team)
+        return_object["home_team"] = Utils.normalize_name(self.home_team)
         return_object["away_stats"] = away_stats
         return_object["home_stats"] = home_stats
         return return_object

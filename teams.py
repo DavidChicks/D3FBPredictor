@@ -6,6 +6,7 @@ from __future__ import annotations
 import re
 from typing import Optional
 import file_handler
+from all_teams import All_Teams
 from url_utils import Url_Utils
 from file_handler import File_Handler
 from parse_game_data_file import Parse_Game_Data_File
@@ -13,15 +14,10 @@ from utils import Utils
 
 class Teams:
     file_handler = File_Handler()
-    all_teams = None
 
     def __get_team_url_part(self, team: str) -> str:
-        if (self.all_teams is None):
-            self.all_teams = self.file_handler.get_all_teams()
-            if (self.all_teams is None):
-                print("Failed to load teams data.")
-                return []
-        url_part = self.all_teams.get(team)["link"] if team in self.all_teams else None
+        all_teams = All_Teams.get_all_teams()
+        url_part = all_teams.get(team)["link"] if team in all_teams else None
         return url_part if url_part is not None else team
 
 
@@ -56,6 +52,8 @@ class Teams:
     def get_team_games(self, team: str, year: int) -> list[dict]:
         team_url_part = self.__get_team_url_part(team)
         page = Url_Utils.get_team_page(team_url_part, year)
+        if page is None:
+            return None
         if (page is None):
             print("  Failed to get team page.")
             return None
@@ -110,3 +108,8 @@ class Teams:
         file_handler.save_game_file(game_url, stats)
 
 
+    def get_and_save_all_teams(self):
+        all_teams = self.get_all_teams_page()
+        file_handle = File_Handler()
+        file_handle.save_all_teams(all_teams)
+        return all_teams
