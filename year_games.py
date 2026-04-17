@@ -3,6 +3,7 @@ from calendar import Day
 
 from file_handler import File_Handler
 from teams import Teams
+from utils import Utils
 from url_utils import Url_Utils
 
 class Year_Games():
@@ -38,7 +39,7 @@ class Year_Games():
             game_data = {}
             game_file_name = game["game_link"].split("/")[-1]
             game_data["game_file"] = game_file_name
-            opponent_normalized = self.teams.normalize_name(game["opponent_name"])
+            opponent_normalized = Utils.normalize_name(game["opponent_name"])
             print(f"Normalized opponent name: '{game['opponent_name']}' -> '{opponent_normalized}'")
             game_data["opponent"] = opponent_normalized
             week = self.get_week_from_file_name(game_file_name)
@@ -56,7 +57,7 @@ class Year_Games():
 
         # TODO: save game_data to a JSON file named after the team and year, e.g. "data/games/2024/team_name.json"
         # TODO: keep existing data if the file already exists, and only add new games to it (don't overwrite existing data)
-        normalized_name = self.teams.normalize_name(team)
+        normalized_name = Utils.normalize_name(team)
         self.file_handler.update_team_file(normalized_name, year, all_games_data)
 
 

@@ -77,7 +77,7 @@ class Url_Utils:
 
 
     def get_game_page(game_url: str, year: str=None) -> Optional[BeautifulSoup]:
-        print(f" -- etting game page for {game_url}")
+        print(f" -- getting game page for {game_url}")
         #if year is None or len(year) == 0:
         #    year = game_url[4:]
         ## https://www.d3football.com/seasons/2025/boxscores/20251115_82vt.xml

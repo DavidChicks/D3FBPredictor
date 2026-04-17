@@ -3,12 +3,13 @@ Usage:
   python get_teams.py --force # re-fetch and overwrite
 """
 from __future__ import annotations
-from re import I
+import re
 from typing import Optional
 import file_handler
 from url_utils import Url_Utils
-from file_handler import TEAMS_FOLDER, File_Handler
+from file_handler import File_Handler
 from parse_game_data_file import Parse_Game_Data_File
+from utils import Utils
 
 class Teams:
     file_handler = File_Handler()
@@ -20,7 +21,7 @@ class Teams:
             if (self.all_teams is None):
                 print("Failed to load teams data.")
                 return []
-        url_part = self.all_teams.get(team)
+        url_part = self.all_teams.get(team)["link"] if team in self.all_teams else None
         return url_part if url_part is not None else team
 
 
@@ -39,8 +40,17 @@ class Teams:
             if not anchor:
                 continue
             link = anchor.get("href", "").strip()
-            text = anchor.get_text(strip=True)
-            teams[text] = link
+            parts = link.split("/")
+            name = anchor.get_text(strip=True)
+            key = Utils.normalize_name(name)
+
+            # find the segment after 'teams/' and before the next '/'
+            m = re.search(r"teams/([^/]+)", link)
+            if m and len(m.groups()) > 0:
+                link_key = m.group(1)
+                teams[key] = {"name": name, "link": link_key }
+            else:
+                print(f"Unexpected link format for team '{name}': {link}")
 
         return teams
 
@@ -172,8 +182,5 @@ class Teams:
         return stats
 
 
-    def normalize_name(self, name: str) -> str:
-        normalized = name.strip().lower()
-        normalized = normalized.replace("&", "and").replace(" ", "_").replace("-", "_").replace(".", "")
-        return normalized
+    # normalize_name has been moved to utils.Utils.normalize_name
 

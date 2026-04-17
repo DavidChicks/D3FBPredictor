@@ -6,6 +6,7 @@ Usage:
 """
 from __future__ import annotations
 from typing import Optional
+from utils import Utils
 import re
 
 
@@ -343,8 +344,8 @@ class Parse_Game_Data_File:
             self.__process_row(row, away_stats, home_stats)
 
         return_object = {}
-        return_object["away_name"] = team_away
-        return_object["home_name"] = team_home
+        return_object["away_team"] = Utils.normalize_name(team_away)
+        return_object["home_team"] = Utils.normalize_name(team_home)
         return_object["away_stats"] = away_stats
         return_object["home_stats"] = home_stats
         return return_object

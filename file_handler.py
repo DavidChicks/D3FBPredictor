@@ -31,42 +31,23 @@ class File_Handler:
     def get_teams_root(self):
         return os.path.join(DATA_ROOT, TEAMS_FOLDER, "")
 
+
     def get_team_file(self, team_name: str):
         file_name = self.get_teams_root() + team_name + ".json"
         return file_name
 
-    #def get_file_name_root(file_path: str):
-    #    filename = os.path.basename(file_path)
-    #    without_extension = os.path.splitext(filename)[0]
-    #    return without_extension
 
-    def save_all_teams(self, teams: dict[str, str]) -> None:
+    def save_all_teams(self, teams: dict) -> None:
         print("Saving all teams...")
         try:
             self.__ensure_all_dirs()
             out_path = os.path.join(".", DATA_ROOT, TEAMS_FOLDER, "all_teams.json")
             print(f"Output path for all teams: {out_path}")
-            finalize_dict = self.process_all_teams(teams)
-            print(f"Finalized teams dict: {finalize_dict}")
             with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(teams, f, indent=2, ensure_ascii=False)
             print(f"Saved all teams to {out_path}")
         except Exception as e:
             print(f"Failed to save all teams to {out_path}: {e}")
-
-
-    def process_all_teams(self, teams: dict[str, str]):
-        print(f"Processing all teams (count={len(teams)})...")
-        finalize_dict = {}
-        for team_name, team_url in teams.items():
-            url_parts = team_url.split("/") if team_url else []
-
-            if len(url_parts) > 2:
-                url_part = url_parts[2]
-            else:
-                url_part = ""
-            finalize_dict[team_name] = url_part
-        return finalize_dict
 
 
     def __ensure_all_dirs(self):

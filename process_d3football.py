@@ -92,19 +92,25 @@ def main() -> None:
     # parser.add_argument("--out", "-o", default=DEFAULT_SAVE_PATH, help="output file path")
     parser.add_argument("--year", "-y", default="2025", help="year (2 or 4 digit) to fetch games for (a/all for all)")
     parser.add_argument("--team", "-t", default="a/all", help="team name to fetch games for (a/all for all)")
-    parser.add_argument("--allteam", "-at", default="", help="fetch all the teams")
+    parser.add_argument("--allteam", "-at", action="store_true", help="fetch all teams data (no game data)")
     args = parser.parse_args()
     print(f"args: {args})")
     print(f"args[year]: {args.year}")
     print(f"args[allteam]: {args.allteam}")
 
     # logging.basicConfig(level=logging.INFO, "https://www.d3football.com/teams/index", force=args.force)
-    # all_teams = get_all_teams()
+    if args.allteam:
+        print("Fetching all teams...")
+        all_teams = get_all_teams()
+        return
+
+    # TODO verify arguments are valid (e.g. year is 2 or 4 digits or "a/all", team is in all_teams or "a/all")
 
     year = args.year
     if "year" in args and args.year:
         print(f"Year argument provided: {args.year}")
-
+    team = args.team
+    # TODO: verify that year and team are valid (e.g. year is 4 digits, team is in all_teams)
 
 
     year_games = Year_Games()
