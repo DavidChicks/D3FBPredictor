@@ -1,14 +1,17 @@
-"""Fetch https://www.d3football.com/teams/index and prepare it for parsing.
+"""
+Parse data files
 
-Usage:
-  python parse_game_data_file.get_game_stats()
-  python parse_game_data_file.get_game_score
+Create a dictionary conveying all the stats for the data page
+This is tied to the HTML format from d3football.com
+    seasons/{year}/boxscores/{page}.xml
 """
 from __future__ import annotations
-from typing import Optional
+import stat
+from typing import Optional, ClassVar
+import json
 from utils import Utils
 import re
-
+from game_statistics import Game_Statistics
 
 class Parse_Game_Data_File:
     away_team: str
@@ -132,6 +135,109 @@ class Parse_Game_Data_File:
             }
     }
 
+    stat_special_handler = {
+        "time of possession": "__get_time_of_possession"
+    }
+
+
+    def __get_time_of_possession(self, value: str) -> Optional[int]:
+        # Convert a time of possession string (e.g., "12:34") to total seconds
+        if not value:
+            return None
+        try:
+            minutes, seconds = map(int, value.split(":"))
+            return minutes * 60 + seconds
+        except Exception:
+            return None
+    #
+    #GameStatistics = {
+    #    "FIRST DOWNS": int,
+    #    "Passing": int,
+    #    "Rushing": int,
+    #    "Penalty": int,
+    #    "THIRD DOWN Conversions": int,
+    #    "THIRD DOWN Total":int,
+    #    "THIRD DOWN EFFICIENCY": float,
+    #    "FOURTH DOWN Conversions": int,
+    #    "FOURTH DOWN Total": int,
+    #    "FOURTH DOWN EFFICIENCY": float,
+    #    "TOTAL OFFENSE": int,
+    #    "Total Offensive Plays": int,
+    #    "Average gain per play": float,
+    #    "NET YARDS PASSING": int,
+    #    "Completions": int,
+    #    "Attempts": int,
+    #    "Net yards per pass play": float,
+    #    "Sacked: Number": int,
+    #    "Yards": int,
+    #    "Had intercepted": int,
+    #    "NET YARDS RUSHING": int,
+    #    "Rushing Attempts": int,
+    #    "Average gain per rush": float,
+    #    "PUNTS: Number": int,
+    #    "PUNTS: Yards": int,
+    #    "Average": "Punts_yards_average",
+    #    "TOTAL RETURN YARDS": int,
+    #    "Punt Returns: Number": int,
+    #    "Punt Returns: Yards": int,
+    #    "Kickoff Returns: Number": int,
+    #    "Kickoff Returns: Yards": int,
+    #    "Interception Returns: Number": int,
+    #    "Interception Returns: Yards": int,
+    #    "PENALTIES: Number": int,
+    #    "PENALTIES: Yards": int,
+    #    "FUMBLES: Number": int,
+    #    "FUMBLES: Lost": int,
+    #    "SACKS: Number": int,
+    #    "SACKS: Yards": int,
+    #    "INTERCEPTIONS: Number": int,
+    #    "INTERCEPTIONS: Yards": int,
+    #    "TIME OF POSSESSION": int,
+    #}
+
+    stat_rename: ClassVar[dict] = {
+        "FIRST DOWNS": "First_downs_total",
+        "Passing": "First_downs_passing",
+        "Rushing": "First_downs_rushing",
+        "Penalty": "First_downs_penalties",
+        "THIRD DOWN Conversions": "Third_down_conversions",
+        "THIRD DOWN Total": "Third_downs_count",
+        "THIRD DOWN EFFICIENCY": "Third_downs_efficiency",
+        "FOURTH DOWN Conversions": "Fourth_downs_conversions",
+        "FOURTH DOWN Total": "Fourth_downs_count",
+        "FOURTH DOWN EFFICIENCY": "Fourth_downs_efficiency",
+        "TOTAL OFFENSE": "Offensive_yards",
+        "Total Offensive Plays": "Offensive_plays",
+        "Average gain per play": "Offensive_yards_per_play",
+        "NET YARDS PASSING": "Pass_yards",
+        "Completions": "Pass_completions",
+        "Attempts": "Pass_plays",
+        "Net yards per pass play": "Pass_yards_per_play",
+        "Sacked: Number": "Sacks_count",
+        "Yards": "Sacks_yards",
+        "Had intercepted": "Int_thrown",
+        "NET YARDS RUSHING": "Rush_yards",
+        "Rushing Attempts": "Rush_plays",
+        "Average gain per rush": "Rush_yards_per_play",
+        "PUNTS: Number": "Punts_count",
+        "PUNTS: Yards": "Punts_yards",
+        "Average": "Punts_yards_average",
+        "TOTAL RETURN YARDS": "Return_yards_total",
+        "Punt Returns: Number": "Punt_ret_count",
+        "Punt Returns: Yards": "Punt_ret_yards",
+        "Kickoff Returns: Number": "KO_ret_count",
+        "Kickoff Returns: Yards": "KO_ret_yards",
+        "Interception Returns: Number": "Int_ret_count",
+        "Interception Returns: Yards": "Int_ret_yards",
+        "PENALTIES: Number": "Pentalies_count",
+        "PENALTIES: Yards": "Penalties_yards",
+        "FUMBLES: Number": "Fumbles_count",
+        "FUMBLES: Lost": "Fumbles_lost",
+        "SACKS: Number": "Sacks_count",
+        "SACKS: Yards": "Sacks_yards",
+        "TIME OF POSSESSION": "TOP",
+    }
+
 
     def __get_child_fields(self, cell: dict, ignore_fields:str, strip: bool) -> list[str]:
         children = []
@@ -160,7 +266,6 @@ class Parse_Game_Data_File:
 
         for child in children:
             if "0  0" in child: # handle cases where the number/yards is "0  0" rather than "0-0"
-                #print(f"  ## found '0  0': '{child}'")
                 child = "0-0"
             if sub_field_splitter is not None and sub_field_splitter in child:
                 parts = self.__get_child_parts_non_empty(child, sub_field_splitter)
@@ -285,6 +390,19 @@ class Parse_Game_Data_File:
             for i, field_name in enumerate(field_names):
                 away_stats[field_name] = away_sub_stats[i]
                 home_stats[field_name] = home_sub_stats[i]
+        elif stat in self.stat_special_handler:
+            handler_method_name = self.stat_special_handler[stat]
+            if hasattr(self, handler_method_name):
+                handler_method = getattr(self, handler_method_name)
+                if callable(handler_method):
+                    value_away = handler_method(cells[0].get_text(strip=True))
+                    value_home = handler_method(cells[2].get_text(strip=True))
+                    away_stats[self.stat_rename.get(stat, stat)] = value_away
+                    home_stats[self.stat_rename.get(stat, stat)] = value_home
+                else:
+                    print(f"Handler method '{handler_method_name}' for stat '{stat}' is not callable.")
+            else:
+                print(f"No handler method named '{handler_method_name}' found for stat '{stat}'.")
 
         else:
             away_stats[stat] = cells[0].get_text(strip=True)
@@ -301,6 +419,52 @@ class Parse_Game_Data_File:
             return ''.join(nums)
         return None
 
+
+    def __stat_renamer(self, stats: dict) -> Game_Statistics:
+        statistics = Game_Statistics()
+        for stat_name, stat_value in self.stat_rename.items():
+            # prefer value in `stats` matching the renamed key (stat_value),
+            # otherwise fall back to the original stat_name key.
+            if stat_value in stats:
+                value = stats[stat_value]
+            elif stat_name in stats:
+                value = stats[stat_name]
+            else:
+                print(f"Stat '{stat_name}' not found in stats, skipping renaming for this stat.")
+                continue
+
+            #################################
+            # If Game_Statistics defines an expected field type for this stat, try to
+            # coerce the value to that type before assignment.
+            expected_type = getattr(Game_Statistics, "field_types", {}).get(stat_value)
+            if expected_type is not None:
+                try:
+                    # handle empty strings gracefully
+                    if value == "" or value is None:
+                        print(f"Warning: Empty value for stat '{stat_value}', setting to None")
+                        coerced = None
+                    else:
+                        coerced = expected_type(value)
+                        # print(f"Coerced stat '{stat_value}' value '{value}' to {expected_type.__name__} with result: {coerced}")
+                    setattr(statistics, stat_value, coerced)
+                    continue
+                except Exception:
+                    # fall through to assignment below
+                    pass
+            else:
+                print(f"No expected type defined for stat '{stat_value}', assigning value as-is: {value}")
+            #################################
+
+            try:
+                setattr(statistics, stat_value, value)
+            except Exception:
+                try:
+                    statistics[stat_value] = value
+                except Exception:
+                    print(f"Failed to assign stat '{stat_value}' on Game_Statistics")
+        return statistics
+
+
     def get_game_score(self, game_page) -> Optional[dict]:
         scores_div = game_page.find_all("div", class_="stats-wrapper clearfix")
         if scores_div is None or len(scores_div) == 0:
@@ -316,9 +480,13 @@ class Parse_Game_Data_File:
         scores_tds = scores_row.find_all("td")
         away_score = self.__get_score_from_td_cell(scores_tds[0])
         home_score = self.__get_score_from_td_cell(scores_tds[1])
-        return {"away": away_score,
-                "home": home_score
+        return {"away_score": away_score,
+                "home_score": home_score
                 }
+
+    def get_stat_names(self) -> list[str]:
+        return list(self.stat_rename.values())
+
 
     def get_game_stats(self, game_page) -> Optional[dict]:
         teams_tables = game_page.find_all("table", class_="all-center")
@@ -337,6 +505,9 @@ class Parse_Game_Data_File:
             self.__process_row(row, away_stats, home_stats)
 
         return_object = {}
+        missing = []
+        away_stats  = self.__stat_renamer(away_stats)
+        home_stats  = self.__stat_renamer(home_stats)
         return_object["away_team"] = Utils.normalize_name(self.away_team)
         return_object["home_team"] = Utils.normalize_name(self.home_team)
         return_object["away_stats"] = away_stats

@@ -17,10 +17,8 @@ class All_Teams:
 
     @staticmethod
     def get_all_teams():
-        print("calling All_Teams.get_all_teams")
         all_teams = All_Teams()
         if all_teams.teams is None:
-            print("$$$$$ getting all teams from web site $$$$$")
             all_teams.teams = all_teams.file_handler.get_all_teams()
             if all_teams.teams is None:
                 print("Failed to load teams data.")

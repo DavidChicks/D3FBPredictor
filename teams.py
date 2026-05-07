@@ -49,7 +49,18 @@ class Teams:
         return teams
 
 
-    def get_team_games(self, team: str, year: int) -> list[dict]:
+    def get_team_games(self, team: str, year: int, force: bool) -> list[dict]:
+        if force or not self.file_handler.team_file_exists(team):
+            print(f"Team file does not exist for {team}, fetching from web.")
+            return self.get_team_games_from_web(team, year)
+        team_data = self.file_handler.load_team_file(team, none_if_missing=True)
+        print(f"Loaded team data for {team}: {team_data}")
+        if team_data is None or team_data[str(year)] is None:
+            return self.get_team_games_from_web(team, year)
+        return team_data[str(year)]
+
+
+    def get_team_games_from_web(self, team: str, year: int) -> list[dict]:
         team_url_part = self.__get_team_url_part(team)
         page = Url_Utils.get_team_page(team_url_part, year)
         if page is None:
@@ -71,6 +82,19 @@ class Teams:
             row_text = row.get_text()
         
             if "•" in row_text:
+                # print(f" @@ row_text: {row_text}")
+                tds = row.find_all("td")
+                if len(tds) < 4:
+                    if not "Overall record:" in row_text and not "Conference:" in row_text:
+                        print(f"Cannot find expected table data cells with {row_text}")
+                    continue
+
+                location = tds[1].get_text().strip()[:2]
+                is_home = location == "vs"
+                if not (is_home or location == "at"):
+                    print(f"Location not found: {location}; assuming away")
+
+                # TODO look for anchors in specific table data cells
                 anchors = row.find_all("a")
                 for a in anchors:
                     if a.get_text(strip=True) == "BX":
@@ -84,6 +108,7 @@ class Teams:
                     "game_link": game_link,
                     "opponent_link": opponent_link,
                     "opponent_name": opponent_name,
+                    "is_home": is_home
                 }
                 d3games.append(new_game)
         return d3games
@@ -110,6 +135,6 @@ class Teams:
 
     def get_and_save_all_teams(self):
         all_teams = self.get_all_teams_page()
-        file_handle = File_Handler()
-        file_handle.save_all_teams(all_teams)
+        file_handler = File_Handler()
+        file_handler.save_all_teams(all_teams)
         return all_teams

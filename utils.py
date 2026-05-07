@@ -11,7 +11,7 @@ class Utils:
             "Lewis & Clark" -> "lewis_and_clark"
         """
         normalized = name.strip().lower()
-        normalized = normalized.replace("&", "and").replace(" ", "_").replace("-", "_").replace(".", "")
+        normalized = normalized.replace("&", "and").replace(" ", "_").replace("-", "_").replace(".", "").replace("'", "").replace("(", "").replace(")", "")
         return normalized
 
 
