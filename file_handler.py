@@ -133,9 +133,9 @@ class File_Handler:
             print(f"Failed to update team file for {team_name} at {team_file_name}: {e}")
 
 
-    def save_game_file(self, game_url: str, stats: dict):
+    def save_game_file(self, game_url: str, stats: dict, year: str):
         game_file_name = game_url.split("/")[-1].split(".")[0] + ".json"
-        year = game_file_name[:4]
+        year = year if year is not None else game_file_name[:4]
         self.__ensure_game_year_dir(year)
         games_year_dir = os.path.join(DATA_ROOT, GAMES_FOLDER, year)
         os.makedirs(os.path.dirname(games_year_dir), exist_ok=True)
@@ -145,6 +145,7 @@ class File_Handler:
             os.makedirs(os.path.dirname(games_year_dir), exist_ok=True)
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(stats, f, indent=2, ensure_ascii=False)
+            print(f"Saved game stats to {file_path}")
         except Exception as e:
             print(f"Failed to save stats to {file_path}: {e}")
 

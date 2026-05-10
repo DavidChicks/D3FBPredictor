@@ -11,12 +11,15 @@ from url_utils import Url_Utils
 from file_handler import File_Handler
 from parse_game_data_file import Parse_Game_Data_File
 from utils import Utils
+import time
 
 class Teams:
-    file_handler = File_Handler()
+
+    def __init__(self, file_handler: File_Handler):
+        self.file_handler = file_handler
 
     def __get_team_url_part(self, team: str) -> str:
-        all_teams = All_Teams.get_all_teams()
+        all_teams = All_Teams.get_all_teams(self.file_handler)
         url_part = all_teams.get(team)["link"] if team in all_teams else None
         return url_part if url_part is not None else team
 
@@ -49,23 +52,15 @@ class Teams:
         return teams
 
 
-    def get_team_games(self, team: str, year: int, force: bool) -> list[dict]:
-        if force or not self.file_handler.team_file_exists(team):
-            print(f"Team file does not exist for {team}, fetching from web.")
-            return self.get_team_games_from_web(team, year)
-        team_data = self.file_handler.load_team_file(team, none_if_missing=True)
-        print(f"Loaded team data for {team}: {team_data}")
-        if team_data is None or team_data[str(year)] is None:
-            return self.get_team_games_from_web(team, year)
-        return team_data[str(year)]
-
-
     def get_team_games_from_web(self, team: str, year: int) -> list[dict]:
         team_url_part = self.__get_team_url_part(team)
-        page = Url_Utils.get_team_page(team_url_part, year)
-        if page is None:
+        retries = 3
+        try:
+            page = Url_Utils.get_team_page(team_url_part, year, 3)
+        except Exception as e:
+            print(f"Error fetching team page for {team} in year {year}: {e}")
             return None
-        if (page is None):
+        if page is None:
             print("  Failed to get team page.")
             return None
         teams_schedule = page.find_all("table", class_="schedule") 
@@ -91,8 +86,9 @@ class Teams:
 
                 location = tds[1].get_text().strip()[:2]
                 is_home = location == "vs"
-                if not (is_home or location == "at"):
-                    print(f"Location not found: {location}; assuming away")
+                #if not (is_home or location == "at"):
+                    #print(f"  Location not found: {location}; assuming away")
+
 
                 # TODO look for anchors in specific table data cells
                 anchors = row.find_all("a")
@@ -115,9 +111,13 @@ class Teams:
 
 
     def get_game_stats(self, game_url: str) -> Optional[dict]:
-        game_page = Url_Utils.get_game_page(game_url)
-        if game_page is None:
-            print("  Failed to get game page.")
+        try:
+            game_page = Url_Utils.get_game_page(game_url, 3)
+            if game_page is None:
+                print("Failed to get game page.")
+                return None
+        except Exception as e:
+            print(f"Error fetching game page for {game_url}: {e}")
             return None
         parser = Parse_Game_Data_File()
         stats = parser.get_game_stats(game_page)
@@ -127,14 +127,14 @@ class Teams:
         return stats
 
 
-    def get_and_save_game_stats(self, game_url: str) -> None:
+    def get_and_save_game_stats(self, game_url: str, year: str) -> bool:
         stats = self.get_game_stats(game_url)
-        file_handler = File_Handler()
-        file_handler.save_game_file(game_url, stats)
-
+        if stats is None:
+            return False
+        self.file_handler.save_game_file(game_url, stats, year)
+        return True
 
     def get_and_save_all_teams(self):
         all_teams = self.get_all_teams_page()
-        file_handler = File_Handler()
-        file_handler.save_all_teams(all_teams)
+        self.file_handler.save_all_teams(all_teams)
         return all_teams

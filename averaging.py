@@ -24,18 +24,14 @@ from game_statistics import Game_Statistics
 
 
 class Averaging:
-    file_handler = None
     team = None
     year = None
-    #away_stats = {}
-    #home_stats = {}
     team_all_stats = {}
     opp_all_stats = {}
     away_count = 0
     home_count = 0
-    file_handler = File_Handler()
-    # all_count = 0
-    def __init__(self, team: str = "", year: str=""):
+
+    def __init__(self, file_handler: File_Handler, team: str = "", year: str=""):
         """Create an Averaging instance that may operate on a given file.
 
         Args:
@@ -43,12 +39,7 @@ class Averaging:
         """
         self.team = team
         self.year = year
-        # self.filename = filename
-        file_handler = File_Handler()
-
-    def Averaging(team:str, year: str):
-        self.year = year
-        self.team = team
+        self.file_handler = file_handler
 
 
     def calculate_stats(self): # , week: int = 11):
@@ -157,8 +148,8 @@ class Averaging:
         week = 0
         for weekly_game in team_year_data:
             if  not weekly_game == None and isinstance(weekly_game, dict):
-                game_file =  weekly_game["game_file"] # game.get("game_file")
-                is_home = weekly_game["is_home"] # game.get("is_home")
+                game_file =  weekly_game["game_file"]
+                is_home = weekly_game["is_home"]
                 if isinstance(game_file, str) and game_file.strip() != "" and isinstance(is_home, bool):
                     if is_home:
                         game_lists["home"].append(game_file)

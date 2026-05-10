@@ -10,7 +10,9 @@ import argparse
 import json
 import logging
 import os
+from re import M
 import requests
+import time
 from bs4 import BeautifulSoup
 
 
@@ -43,28 +45,38 @@ class Url_Utils:
 
 
     @staticmethod
-    def get_page(url: str, force: bool = False) -> BeautifulSoup:
+    def get_page(url: str, max_retries: int = 0) -> BeautifulSoup:
         """Return a BeautifulSoup for the teams index page.
 
         If a saved copy exists and force is False, the saved copy will be used.
         Otherwise the page is fetched and saved to `save_path`.
         """
         logging.info("Fetching %s", url)
-        html = Url_Utils.fetch_url(url)
-
-        # Create parsing-ready BeautifulSoup object
-        soup = BeautifulSoup(html, "html.parser")
-        return soup
-
+        retries = 0
+        while True:
+            try:
+                html = Url_Utils.fetch_url(url)
+                # Create parsing-ready BeautifulSoup object
+                soup = BeautifulSoup(html, "html.parser")
+                return soup
+            except requests.RequestException as e:
+                if retries < max_retries:
+                    logging.warning("Error fetching %s: %s. Retrying...", url, e)
+                    retries += 1
+                    logging.warning("  Waiting %d seconds before retrying...", 60 * retries)
+                    time.sleep(60 * retries)
+                    continue
+                logging.error("Failed to fetch %s: %s. No more retries.", url, e)
+                raise e
 
     @staticmethod
-    def get_team_page(team: str, year: str) -> Optional[BeautifulSoup]:
+    def get_team_page(team: str, year: str, max_retries: int = 0) -> Optional[BeautifulSoup]:
         full_url = Url_Utils.URL_ROOT + "teams/" + team + "/" + year + "/index"
-        return Url_Utils.get_page(full_url)
+        return Url_Utils.get_page(full_url, max_retries)
 
 
     @staticmethod
-    def get_game_page(game_url: str, year: str=None) -> Optional[BeautifulSoup]:
+    def get_game_page(game_url: str, max_retries = 0) -> Optional[BeautifulSoup]:
         ## https://www.d3football.com/seasons/2025/boxscores/20251115_82vt.xml
         url = Url_Utils.URL_ROOT + game_url
-        return Url_Utils.get_page(url)
+        return Url_Utils.get_page(url, max_retries)

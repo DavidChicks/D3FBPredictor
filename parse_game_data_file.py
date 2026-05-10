@@ -136,20 +136,10 @@ class Parse_Game_Data_File:
     }
 
     stat_special_handler = {
-        "time of possession": "__get_time_of_possession"
+        "TIME OF POSSESSION": lambda top: 60 * int(top.split(":")[0]) + int(top.split(":")[1] if top and ":" in top else 0)
     }
 
 
-    def __get_time_of_possession(self, value: str) -> Optional[int]:
-        # Convert a time of possession string (e.g., "12:34") to total seconds
-        if not value:
-            return None
-        try:
-            minutes, seconds = map(int, value.split(":"))
-            return minutes * 60 + seconds
-        except Exception:
-            return None
-    #
     #GameStatistics = {
     #    "FIRST DOWNS": int,
     #    "Passing": int,
@@ -391,19 +381,11 @@ class Parse_Game_Data_File:
                 away_stats[field_name] = away_sub_stats[i]
                 home_stats[field_name] = home_sub_stats[i]
         elif stat in self.stat_special_handler:
-            handler_method_name = self.stat_special_handler[stat]
-            if hasattr(self, handler_method_name):
-                handler_method = getattr(self, handler_method_name)
-                if callable(handler_method):
-                    value_away = handler_method(cells[0].get_text(strip=True))
-                    value_home = handler_method(cells[2].get_text(strip=True))
-                    away_stats[self.stat_rename.get(stat, stat)] = value_away
-                    home_stats[self.stat_rename.get(stat, stat)] = value_home
-                else:
-                    print(f"Handler method '{handler_method_name}' for stat '{stat}' is not callable.")
-            else:
-                print(f"No handler method named '{handler_method_name}' found for stat '{stat}'.")
-
+            handler_method = self.stat_special_handler[stat]
+            value_away = handler_method(cells[0].get_text(strip=True))
+            value_home = handler_method(cells[2].get_text(strip=True))
+            away_stats[self.stat_rename.get(stat, stat)] = value_away
+            home_stats[self.stat_rename.get(stat, stat)] = value_home
         else:
             away_stats[stat] = cells[0].get_text(strip=True)
             home_stats[stat] = cells[2].get_text(strip=True)
