@@ -26,34 +26,37 @@ import requests
 from typing import Optional
 from utils import Utils
 
+from ifile_handler import IFile_Handler
+
 DATA_ROOT = "data"
 TEAMS_FOLDER = "teams"
 GAMES_FOLDER = "games"
 AVERAGE_FOLDER = "averages"
 ALL_TEAMS_FILE_NAME = "__all_teams"
 
-class File_Handler:
+
+class File_Handler(IFile_Handler):
     def get_teams_root(self):
         return os.path.join(DATA_ROOT, TEAMS_FOLDER, "")
 
 
-    def get_team_file_path_name(self, team_name: str):
+    def __get_team_file_path_name(self, team_name: str):
         file_name = Utils.normalize_name(team_name) + ".json"
         file_path_name = os.path.join(self.get_teams_root(), file_name)
         return file_path_name
 
 
+    def load_game_file(self, year: str, game_file_name: str) -> dict:
+        file_path = os.path.join(DATA_ROOT, GAMES_FOLDER, year, game_file_name)
+        return self.__load_file(file_path, False)
+
+
     def load_team_file(self, team_name: str, none_if_missing):
-        team_file = self.get_team_file_path_name(team_name)
+        team_file = self.__get_team_file_path_name(team_name)
         file_contents = self.__load_file(team_file, True)
         if file_contents is not None:
             return file_contents
         return None if none_if_missing else {} # {"name": team_name, "games": {}}
-
-
-    def load_game_file(self, year: str, game_file_name: str) -> dict:
-        file_path = os.path.join(DATA_ROOT, GAMES_FOLDER, year, game_file_name)
-        return self.__load_file(file_path, False)
 
 
     def __load_file(self, file_path_name: str, create_if_missing: bool = False):
@@ -73,7 +76,7 @@ class File_Handler:
         try:
             
             self.__ensure_all_dirs()
-            out_path = self.get_team_file_path_name(ALL_TEAMS_FILE_NAME)
+            out_path = self.__get_team_file_path_name(ALL_TEAMS_FILE_NAME)
             with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(teams, f, indent=2, ensure_ascii=False)
         except Exception as e:
@@ -103,11 +106,12 @@ class File_Handler:
     def __ensure_averages_year_dir(self, year: str):
         self.__ensure_all_dirs()
         averages_dir = os.path.join(DATA_ROOT, AVERAGE_FOLDER)
+        #print(f"Ensuring averages year dir for {year} at {averages_dir}...")
         os.makedirs(os.path.dirname(averages_dir), exist_ok=True)
 
 
     def get_all_teams(self):
-        all_teams_path = self.get_team_file_path_name(ALL_TEAMS_FILE_NAME)
+        all_teams_path = self.__get_team_file_path_name(ALL_TEAMS_FILE_NAME)
         if not os.path.exists(all_teams_path):
             print(f"All teams file not found at {all_teams_path}")
             return None
@@ -124,7 +128,7 @@ class File_Handler:
     def update_team_file(self, team_name: str, year: str, year_games: dict):
         team_data = self.load_team_file(team_name, False)
         team_data[year] = year_games
-        team_file_name = self.get_team_file_path_name(team_name)
+        team_file_name = self.__get_team_file_path_name(team_name)
         try:
             with open(team_file_name, "w", encoding="utf-8") as f:
                 json.dump(team_data, f, indent=2, ensure_ascii=False)
@@ -163,7 +167,7 @@ class File_Handler:
 
 
     def team_file_exists(self, team: str) -> bool:
-        file_path = self.get_team_file_path_name(team)
+        file_path = self.__get_team_file_path_name(team)
         return os.path.exists(file_path) and os.path.isfile(file_path)
 
 

@@ -35,7 +35,7 @@ def main() -> None:
     file_handler = File_Handler()
     # logging.basicConfig(level=logging.INFO, "https://www.d3football.com/teams/index", force=args.force)
     if args.allteam:
-        teams = Teams(file_handler=file_handler)
+        teams = Teams(ifile_handler=file_handler)
         print("Fetching all teams...")
         all_teams = teams.get_and_save_all_teams()
         return
@@ -52,7 +52,7 @@ def main() -> None:
     
     if args.games:
         print(f"Fetching games for team {team} in year {year}...")
-        year_games = Year_Games(file_handler=file_handler)
+        year_games = Year_Games(ifile_handler=file_handler)
         if team in ("a", "all"):
             games = year_games.get_all_games_for_all_team_in_year(year, force)
         else:
@@ -60,9 +60,9 @@ def main() -> None:
 
     if args.stats:
         if team in ("a", "all"):
-            Averaging.get_all_teams_foryear_files(file_handler=file_handler, year=year)
+            Averaging.get_all_teams_foryear_files(ifile_handler=file_handler, year=year)
         else:
-            averaging = Averaging(file_handler=file_handler, team=team, year=year)
+            averaging = Averaging(ifile_handler=file_handler, team=team, year=year)
             averaging.get_team_year_files()
 
 

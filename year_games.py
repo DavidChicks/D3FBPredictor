@@ -5,20 +5,20 @@ from ast import Dict
 from calendar import Day
 
 from all_teams import All_Teams
-from file_handler import File_Handler
+from ifile_handler import IFile_Handler
 from teams import Teams
 from utils import Utils
 from url_utils import Url_Utils
 
 class Year_Games():
 
-    def __init__(self, file_handler: File_Handler):
-        self.file_handler = file_handler
-        self.teams = Teams(file_handler=file_handler)
+    def __init__(self, ifile_handler: IFile_Handler):
+        self.ifile_handler = ifile_handler
+        self.teams = Teams(ifile_handler=ifile_handler)
 
     def get_all_game_for_team_in_year(self, team_raw: str, year: str, force) -> bool:
         at_least_one_file_updated = False
-        all_teams = All_Teams.get_all_teams(self.file_handler)
+        all_teams = All_Teams.get_all_teams(self.ifile_handler)
         team_name = Utils.normalize_name(team_raw)
         if team_name not in all_teams:
             print(f"Unknown team, {team_raw} ({team_name})")
@@ -28,12 +28,12 @@ class Year_Games():
         games = None
         local_file = False
 
-        if force or not self.file_handler.team_file_exists(team_name):
+        if force or not self.ifile_handler.team_file_exists(team_name):
             print(f"Team file does not exist (or --force passed, fetching from web: ***  {team_name} ***.")
             games = self.teams.get_team_games_from_web(team_name, year)
             local_file = False
         else:
-            team_data_all_years = self.file_handler.load_team_file(team_name, none_if_missing=True)
+            team_data_all_years = self.ifile_handler.load_team_file(team_name, none_if_missing=True)
             #print(f"Loaded team data for {team_name}: {team_data_all_years}")
             if team_data_all_years is None or team_data_all_years[str(year)] is None:
                 print(f"Team file does not contain data for year, fetching from web: ***  {team_name} - {year}.")
@@ -66,7 +66,7 @@ class Year_Games():
             # add this game's data to the list for that week
             Utils.add_element_to_list_at_index(all_games_data, week, game_data)
 
-            file_already_exists = self.file_handler.game_file_exists(year, game_file_name)
+            file_already_exists = self.ifile_handler.game_file_exists(year, game_file_name)
             if file_already_exists and not force:
                 #print(f"      Game file already exists for {game_file_name}, skipping fetch.")
                 continue
@@ -80,12 +80,12 @@ class Year_Games():
 
         # TODO: keep existing data if the file already exists, and only add new games to it (don't overwrite existing data)
         if at_least_one_file_updated or not local_file:
-            self.file_handler.update_team_file(team_name, year, all_games_data)
+            self.ifile_handler.update_team_file(team_name, year, all_games_data)
         return at_least_one_file_updated
 
 
     def get_all_games_for_all_team_in_year(self, year: str, force=False):
-        all_teams = All_Teams.get_all_teams(self.file_handler)
+        all_teams = All_Teams.get_all_teams(self.ifile_handler)
         for team_name in all_teams:
             updateMade = self.get_all_game_for_team_in_year(team_name, year, force)
             if updateMade:

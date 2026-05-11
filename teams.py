@@ -5,21 +5,21 @@ Usage:
 from __future__ import annotations
 import re
 from typing import Optional
-import file_handler
+import ifile_handler
 from all_teams import All_Teams
 from url_utils import Url_Utils
-from file_handler import File_Handler
+from ifile_handler import IFile_Handler
 from parse_game_data_file import Parse_Game_Data_File
 from utils import Utils
 import time
 
 class Teams:
 
-    def __init__(self, file_handler: File_Handler):
-        self.file_handler = file_handler
+    def __init__(self, ifile_handler: IFile_Handler):
+        self.ifile_handler = ifile_handler
 
     def __get_team_url_part(self, team: str) -> str:
-        all_teams = All_Teams.get_all_teams(self.file_handler)
+        all_teams = All_Teams.get_all_teams(self.ifile_handler)
         url_part = all_teams.get(team)["link"] if team in all_teams else None
         return url_part if url_part is not None else team
 
@@ -131,10 +131,10 @@ class Teams:
         stats = self.get_game_stats(game_url)
         if stats is None:
             return False
-        self.file_handler.save_game_file(game_url, stats, year)
+        self.ifile_handler.save_game_file(game_url, stats, year)
         return True
 
     def get_and_save_all_teams(self):
         all_teams = self.get_all_teams_page()
-        self.file_handler.save_all_teams(all_teams)
+        self.ifile_handler.save_all_teams(all_teams)
         return all_teams

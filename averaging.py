@@ -17,7 +17,7 @@ from math import e
 import re
 from typing import Optional
 from all_teams import All_Teams
-from file_handler import File_Handler
+from ifile_handler import IFile_Handler
 from teams import Parse_Game_Data_File
 from game_statistics import Game_Statistics
 
@@ -29,7 +29,7 @@ class Averaging:
     away_count = 0
     home_count = 0
 
-    def __init__(self, file_handler: File_Handler, team: str = "", year: str=""):
+    def __init__(self, ifile_handler: IFile_Handler, team: str = "", year: str=""):
         """Create an Averaging instance that may operate on a given file.
 
         Args:
@@ -37,7 +37,7 @@ class Averaging:
         """
         self.team = team
         self.year = year
-        self.file_handler = file_handler
+        self.ifile_handler = ifile_handler
 
 
     def calculate_stats(self): # , week: int = 11):
@@ -122,17 +122,17 @@ class Averaging:
 
     
     def __load_team_year_file(self):
-        team_data = self.file_handler.load_team_file(self.team, False)
+        team_data = self.ifile_handler.load_team_file(self.team, False)
         if (team_data is None) or (self.year not in team_data):
             return None
         return team_data[self.year]
 
 
     @staticmethod
-    def get_all_teams_foryear_files(file_handler: File_Handler, year: str) -> dict[str, list[str]]:
-        all_teams = All_Teams.get_all_teams(file_handler)
+    def get_all_teams_foryear_files(ifile_handler: IFile_Handler, year: str) -> dict[str, list[str]]:
+        all_teams = All_Teams.get_all_teams(ifile_handler)
         for team_name in all_teams:
-            averaging = Averaging(file_handler=file_handler, team=team_name, year=year)
+            averaging = Averaging(ifile_handler=ifile_handler, team=team_name, year=year)
             games = averaging.get_team_year_files()
 
 
@@ -168,7 +168,7 @@ class Averaging:
         result = {}
         result["team_stats"] = self.__calcuatate_mean_median_stddev_for_all_stats(self.team_all_stats)
         result["opp_stats"] = self.__calcuatate_mean_median_stddev_for_all_stats(self.opp_all_stats)
-        self.file_handler.save_statisical_file(self.team, self.year, result)
+        self.ifile_handler.save_statisical_file(self.team, self.year, result)
         return result
 
 
@@ -182,7 +182,7 @@ class Averaging:
 
 
     def __load_game_file(self, game_file: str, is_home: bool): # -> Optional[dict]:
-        game_data = self.file_handler.load_game_file(year=self.year, game_file_name=game_file)
+        game_data = self.ifile_handler.load_game_file(year=self.year, game_file_name=game_file)
         if (game_data is None) or (not isinstance(game_data, dict)):
             print(f"Failed to load game file {game_file} for year {self.year}")
             return
