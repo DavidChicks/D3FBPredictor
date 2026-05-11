@@ -59,9 +59,11 @@ def main() -> None:
             games = year_games.get_all_game_for_team_in_year(team, year, force)
 
     if args.stats:
-        print(f"Calculating stats for team {team} in year {year}...")
-        averaging = Averaging(file_handler=file_handler, team=team, year=year)
-        games = averaging.get_team_year_files()
+        if team in ("a", "all"):
+            Averaging.get_all_teams_foryear_files(file_handler=file_handler, year=year)
+        else:
+            averaging = Averaging(file_handler=file_handler, team=team, year=year)
+            averaging.get_team_year_files()
 
 
 if __name__ == "__main__":

@@ -103,7 +103,6 @@ class File_Handler:
     def __ensure_averages_year_dir(self, year: str):
         self.__ensure_all_dirs()
         averages_dir = os.path.join(DATA_ROOT, AVERAGE_FOLDER)
-        print(f"Ensuring averages year dir for {year} at {averages_dir}...")
         os.makedirs(os.path.dirname(averages_dir), exist_ok=True)
 
 
