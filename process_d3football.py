@@ -11,7 +11,10 @@ import json
 from re import A
 #import logging
 import requests
+import sys
 from typing import Optional
+
+sys.path.insert(1, './scripts')
 
 from averaging import Averaging
 from file_handler import File_Handler
