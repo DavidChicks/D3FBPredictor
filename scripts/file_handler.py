@@ -33,6 +33,7 @@ TEAMS_FOLDER = "teams"
 GAMES_FOLDER = "games"
 AVERAGE_FOLDER = "averages"
 ALL_TEAMS_FILE_NAME = "__all_teams"
+NORMALIZATION_FILE_NAME = "__normalization.json"
 
 
 class File_Handler(IFile_Handler):
@@ -59,6 +60,14 @@ class File_Handler(IFile_Handler):
         return None if none_if_missing else {} # {"name": team_name, "games": {}}
 
 
+    def load_averages_file(self, year: str, file_name: str) -> dict:
+        team_file = os.path.join(DATA_ROOT, AVERAGE_FOLDER, year, file_name)
+        file_contents = self.__load_file(team_file, True)
+        if file_contents is not None:
+            return file_contents
+        return None
+
+
     def __load_file(self, file_path_name: str, create_if_missing: bool = False):
         if not os.path.isfile(file_path_name):
             if create_if_missing:
@@ -81,6 +90,16 @@ class File_Handler(IFile_Handler):
                 json.dump(teams, f, indent=2, ensure_ascii=False)
         except Exception as e:
             print(f"Failed to save all teams to {out_path}: {e}")
+
+
+    def save_ai_normalization_file(self, year: str, normalization_data: dict) -> None:
+        try:
+            self.__ensure_averages_year_dir(year)
+            normalization_file_path = os.path.join(DATA_ROOT, AVERAGE_FOLDER, year, NORMALIZATION_FILE_NAME)
+            with open(normalization_file_path, "w", encoding="utf-8") as f:
+                json.dump(normalization_data, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            print(f"Failed to save AI normalization file for year {year}: {e}")
 
 
     def __ensure_all_dirs(self):
@@ -122,6 +141,45 @@ class File_Handler(IFile_Handler):
             return teams
         except Exception as e:
             print(f"Failed to load all teams from {all_teams_path}: {e}")
+            return None
+
+
+    def get_all_game_file_names(self, year: str) -> list:
+        game_files = []
+        games_year_dir = os.path.join(DATA_ROOT, GAMES_FOLDER, year)
+
+        # Only list files in the given directory
+        with os.scandir(games_year_dir) as entries:
+            for entry in entries:
+                if entry.is_file():
+                    game_files.append(entry.name)
+        return game_files
+
+
+    def get_all_averages_files(self, year: str) -> list:
+        average_files = []
+        averages_year_dir = os.path.join(DATA_ROOT, AVERAGE_FOLDER, year)
+        # Only list files in the given directory
+        with os.scandir(averages_year_dir) as entries:
+            for entry in entries:
+                if entry.is_file():
+                    if entry.name.endswith(".json") and entry.name != NORMALIZATION_FILE_NAME:  # Only Json files, but exclude the normalization file
+                        average_files.append(entry.name)
+        return average_files
+
+
+    def load_ai_normalization_file(self, year: str) -> dict:
+        normalization_file_path = os.path.join(DATA_ROOT, AVERAGE_FOLDER, year, NORMALIZATION_FILE_NAME)
+        if not os.path.exists(normalization_file_path):
+            print(f"Normalization file not found at {normalization_file_path}")
+            return None
+        try:
+            with open(normalization_file_path, "r", encoding="utf-8") as f:
+                normalization_data = json.load(f)
+            print(f"Loaded normalization data from {normalization_file_path}")
+            return normalization_data
+        except Exception as e:
+            print(f"Failed to load normalization data from {normalization_file_path}: {e}")
             return None
 
 

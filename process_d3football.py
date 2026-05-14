@@ -17,6 +17,7 @@ from typing import Optional
 sys.path.insert(1, './scripts')
 
 from averaging import Averaging
+from build_ai_data import Build_AI_Data
 from file_handler import File_Handler
 from teams import Teams
 from year_games import Year_Games
@@ -30,6 +31,7 @@ def main() -> None:
     parser.add_argument("--year", "-y", help="year (2 or 4 digit)")
     parser.add_argument("--team", "-t", default="a/all", help="team name to fetch games for (a/all for all)")
     parser.add_argument("--allteam", "-at", action="store_true", help="fetch all teams data (no game data) - no year/team used")
+    parser.add_argument("--ai_generator", "-ai", action="store_true", help="build the ai input data files for the specified year")
     parser.add_argument("--games", "-g", action="store_true", help="get the games for team / year")
     parser.add_argument("--stats", "-s", action="store_true", help="calculate stats for team / year")
     parser.add_argument("--force", "-f", action="store_true", help="re-fetch even if cached")
@@ -67,6 +69,11 @@ def main() -> None:
         else:
             averaging = Averaging(ifile_handler=file_handler, team=team, year=year)
             averaging.get_team_year_files()
+
+    if (args.ai_generator):
+        print(f"Building AI data for year {year}...")
+        ai_data_builder = Build_AI_Data(ifile_handler=file_handler, year=year)
+        ai_data_builder.build_ai_data()
 
 
 if __name__ == "__main__":

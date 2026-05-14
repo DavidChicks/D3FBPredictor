@@ -404,7 +404,7 @@ class Parse_Game_Data_File:
 
     def __stat_renamer(self, stats: dict) -> Game_Statistics:
         statistics = Game_Statistics()
-        for stat_name, stat_value in self.stat_rename.items():
+        for stat_name, stat_value in Parse_Game_Data_File.stat_rename.items():
             # prefer value in `stats` matching the renamed key (stat_value),
             # otherwise fall back to the original stat_name key.
             if stat_value in stats:
@@ -466,8 +466,9 @@ class Parse_Game_Data_File:
                 "home_score": home_score
                 }
 
-    def get_stat_names(self) -> list[str]:
-        return list(self.stat_rename.values())
+    @staticmethod
+    def get_stat_names() -> list[str]:
+        return list(Parse_Game_Data_File.stat_rename.values())
 
 
     def get_game_stats(self, game_page) -> Optional[dict]:
