@@ -14,11 +14,15 @@ import requests
 import sys
 from typing import Optional
 
+
 sys.path.insert(1, './scripts')
 
+from all_teams import All_Teams
 from averaging import Averaging
-from build_ai_data import Build_AI_Data
+#from build_ai_data import Build_AI_Data
 from file_handler import File_Handler
+from url_handler import Url_Handler
+from all_teams import All_Teams
 from teams import Teams
 from year_games import Year_Games
 
@@ -38,9 +42,12 @@ def main() -> None:
     args = parser.parse_args()
 
     file_handler = File_Handler()
+    url_handler = Url_Handler()
+    all_teams = All_Teams(file_handler)
+    teams = Teams(ifile_handler=file_handler, iurl_handler=url_handler, iall_teams=all_teams)
+
     # logging.basicConfig(level=logging.INFO, "https://www.d3football.com/teams/index", force=args.force)
     if args.allteam:
-        teams = Teams(ifile_handler=file_handler)
         print("Fetching all teams...")
         all_teams = teams.get_and_save_all_teams()
         return
@@ -57,23 +64,23 @@ def main() -> None:
     
     if args.games:
         print(f"Fetching games for team {team} in year {year}...")
-        year_games = Year_Games(ifile_handler=file_handler)
+        year_games = Year_Games(ifile_handler=file_handler, iall_teams=all_teams, teams=teams)
         if team in ("a", "all"):
             games = year_games.get_all_games_for_all_team_in_year(year, force)
         else:
             games = year_games.get_all_game_for_team_in_year(team, year, force)
 
     if args.stats:
+        averaging = Averaging(ifile_handler=file_handler, iall_teams=all_teams, team=team, year=year)
         if team in ("a", "all"):
-            Averaging.get_all_teams_foryear_files(ifile_handler=file_handler, year=year)
+            averaging.get_all_teams_for_year_files(year=year)
         else:
-            averaging = Averaging(ifile_handler=file_handler, team=team, year=year)
             averaging.get_team_year_files()
 
-    if (args.ai_generator):
-        print(f"Building AI data for year {year}...")
-        ai_data_builder = Build_AI_Data(ifile_handler=file_handler, year=year)
-        ai_data_builder.build_ai_data()
+    #if (args.ai_generator):
+    #    print(f"Building AI data for year {year}...")
+    #    ai_data_builder = Build_AI_Data(ifile_handler=file_handler, year=year)
+    #    ai_data_builder.build_ai_data()
 
 
 if __name__ == "__main__":

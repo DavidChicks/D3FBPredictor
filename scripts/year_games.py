@@ -4,21 +4,22 @@ import time
 from ast import Dict
 from calendar import Day
 
-from all_teams import All_Teams
 from ifile_handler import IFile_Handler
+from iall_teams import IAll_Teams
 from teams import Teams
 from utils import Utils
-from url_utils import Url_Utils
 
 class Year_Games():
 
-    def __init__(self, ifile_handler: IFile_Handler):
+    def __init__(self, ifile_handler: IFile_Handler, iall_teams: IAll_Teams, teams: Teams):
         self.ifile_handler = ifile_handler
-        self.teams = Teams(ifile_handler=ifile_handler)
+        self.iall_teams = iall_teams
+        self.teams = teams
+
 
     def get_all_game_for_team_in_year(self, team_raw: str, year: str, force) -> bool:
         at_least_one_file_updated = False
-        all_teams = All_Teams.get_all_teams(self.ifile_handler)
+        all_teams = self.iall_teams.get_all_teams()
         team_name = Utils.normalize_name(team_raw)
         if team_name not in all_teams:
             print(f"Unknown team, {team_raw} ({team_name})")
@@ -35,7 +36,7 @@ class Year_Games():
         else:
             team_data_all_years = self.ifile_handler.load_team_file(team_name, none_if_missing=True)
             #print(f"Loaded team data for {team_name}: {team_data_all_years}")
-            if team_data_all_years is None or team_data_all_years[str(year)] is None:
+            if team_data_all_years is None or str(year) not in team_data_all_years or team_data_all_years[str(year)] is None:
                 print(f"Team file does not contain data for year, fetching from web: ***  {team_name} - {year}.")
                 games = self.teams.get_team_games_from_web(team_name, year)
                 local_file = False
@@ -85,7 +86,7 @@ class Year_Games():
 
 
     def get_all_games_for_all_team_in_year(self, year: str, force=False):
-        all_teams = All_Teams.get_all_teams(self.ifile_handler)
+        all_teams = self.iall_teams.get_all_teams(self.ifile_handler)
         for team_name in all_teams:
             updateMade = self.get_all_game_for_team_in_year(team_name, year, force)
             if updateMade:

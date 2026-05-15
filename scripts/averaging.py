@@ -16,7 +16,7 @@ import statistics
 from math import e
 import re
 from typing import Optional
-from all_teams import All_Teams
+from iall_teams import IAll_Teams
 from ifile_handler import IFile_Handler
 from teams import Parse_Game_Data_File
 from game_statistics import Game_Statistics
@@ -29,7 +29,7 @@ class Averaging:
     away_count = 0
     home_count = 0
 
-    def __init__(self, ifile_handler: IFile_Handler, team: str = "", year: str=""):
+    def __init__(self, ifile_handler: IFile_Handler, iall_teams: IAll_Teams, team: str = "", year: str=""):
         """Create an Averaging instance that may operate on a given file.
 
         Args:
@@ -38,6 +38,7 @@ class Averaging:
         self.team = team
         self.year = year
         self.ifile_handler = ifile_handler
+        self.iall_teams = iall_teams
 
 
     def calculate_stats(self): # , week: int = 11):
@@ -128,11 +129,10 @@ class Averaging:
         return team_data[self.year]
 
 
-    @staticmethod
-    def get_all_teams_foryear_files(ifile_handler: IFile_Handler, year: str) -> dict[str, list[str]]:
-        all_teams = All_Teams.get_all_teams(ifile_handler)
+    def get_all_teams_for_year_files(self, year: str) -> dict[str, list[str]]:
+        all_teams = self.iall_teams.get_all_teams(self.ifile_handler)
         for team_name in all_teams:
-            averaging = Averaging(ifile_handler=ifile_handler, team=team_name, year=year)
+            averaging = Averaging(ifile_handler=self.ifile_handler, team=team_name, year=year)
             games = averaging.get_team_year_files()
 
 

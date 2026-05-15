@@ -6,8 +6,8 @@ from __future__ import annotations
 import re
 from typing import Optional
 import ifile_handler
-from all_teams import All_Teams
-from url_utils import Url_Utils
+from iall_teams import IAll_Teams
+from iurl_handler import IUrl_Handler
 from ifile_handler import IFile_Handler
 from parse_game_data_file import Parse_Game_Data_File
 from utils import Utils
@@ -15,48 +15,23 @@ import time
 
 class Teams:
 
-    def __init__(self, ifile_handler: IFile_Handler):
+    def __init__(self, ifile_handler: IFile_Handler, iurl_handler: IUrl_Handler, iall_teams: IAll_Teams):
         self.ifile_handler = ifile_handler
+        self.iall_teams = iall_teams
+        self.iurl_handler = iurl_handler
+
 
     def __get_team_url_part(self, team: str) -> str:
-        all_teams = All_Teams.get_all_teams(self.ifile_handler)
+        all_teams = self.iall_teams.get_all_teams()
         url_part = all_teams.get(team)["link"] if team in all_teams else None
         return url_part if url_part is not None else team
-
-
-    def get_all_teams_page(self, force: bool = False) -> dict:
-        all_teams_page = "https://www.d3football.com/teams/index"
-        page = Url_Utils.get_page(all_teams_page, force=force)
-        teams_info = page.find_all("div", class_="teaminfo")  # sanity check for expected content
-        teams_table = teams_info[0]
-        teams = {}
-
-        rows = teams_table.find_all("tr")
-        for row in rows:
-            anchor = row.find("a")
-            if not anchor:
-                continue
-            link = anchor.get("href", "").strip()
-            parts = link.split("/")
-            name = anchor.get_text(strip=True)
-            key = Utils.normalize_name(name)
-
-            # find the segment after 'teams/' and before the next '/'
-            m = re.search(r"teams/([^/]+)", link)
-            if m and len(m.groups()) > 0:
-                link_key = m.group(1)
-                teams[key] = {"name": name, "link": link_key }
-            else:
-                print(f"Unexpected link format for team '{name}': {link}")
-
-        return teams
 
 
     def get_team_games_from_web(self, team: str, year: int) -> list[dict]:
         team_url_part = self.__get_team_url_part(team)
         retries = 3
         try:
-            page = Url_Utils.get_team_page(team_url_part, year, 3)
+            page = self.iurl_handler.get_team_page(team_url_part, year, 3)
         except Exception as e:
             print(f"Error fetching team page for {team} in year {year}: {e}")
             return None
@@ -89,7 +64,6 @@ class Teams:
                 #if not (is_home or location == "at"):
                     #print(f"  Location not found: {location}; assuming away")
 
-
                 # TODO look for anchors in specific table data cells
                 anchors = row.find_all("a")
                 for a in anchors:
@@ -112,7 +86,7 @@ class Teams:
 
     def get_game_stats(self, game_url: str) -> Optional[dict]:
         try:
-            game_page = Url_Utils.get_game_page(game_url, 3)
+            game_page = self.iurl_handler.get_game_page(game_url, 3)
             if game_page is None:
                 print("Failed to get game page.")
                 return None
@@ -133,8 +107,3 @@ class Teams:
             return False
         self.ifile_handler.save_game_file(game_url, stats, year)
         return True
-
-    def get_and_save_all_teams(self):
-        all_teams = self.get_all_teams_page()
-        self.ifile_handler.save_all_teams(all_teams)
-        return all_teams
