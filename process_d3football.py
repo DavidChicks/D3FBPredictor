@@ -7,12 +7,8 @@ Usage:
 from __future__ import annotations
 
 import argparse
-#import json
-#from re import A
 import logging
-#import requests
 import sys
-#from typing import Optional
 
 
 sys.path.insert(1, './scripts')

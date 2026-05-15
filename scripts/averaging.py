@@ -9,7 +9,7 @@ Create a dictionary conveying all the averages
     oppoenent_home_stats
     oppoenent_away_stats
 """
-
+from __future__ import annotations
 
 import json
 import statistics

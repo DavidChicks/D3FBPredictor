@@ -3,7 +3,6 @@
 This class behaves like a mapping (dict) but also allows attribute-style access.
 It subclasses `dict` so it is JSON-serializable by the standard `json` module.
 """
-
 from __future__ import annotations
 
 from typing import Any

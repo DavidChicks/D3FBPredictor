@@ -1,4 +1,4 @@
-
+from __future__ import annotations
 
 from iall_teams import IAll_Teams
 from ifile_handler import IFile_Handler
@@ -7,12 +7,7 @@ from utils import Utils
 
 class All_Teams(IAll_Teams):
 
-    def __init__(self, ifile_handler: IFile_Handler, team: str = "", year: str=""):
-        """Create an Averaging instance that may operate on a given file.
-
-        Args:
-            filename: path to a file to be associated with this Averaging instance.
-        """
+    def __init__(self, ifile_handler: IFile_Handler):
         self.all_teams = None
         self.teams_for_year = {}
         self.ifile_handler = ifile_handler
@@ -35,17 +30,22 @@ class All_Teams(IAll_Teams):
         return self.teams_for_year[year]
 
 
+    def year_is_valid_for_team(self, team_data: dict, year: int) -> bool:
+        if "years" not in team_data:
+            return True
+        years_data = team_data["years"]
+        if ("missing" in years_data and year in years_data["missing"]) or \
+            ("last" in years_data and year > years_data["last"]) or \
+            ("first" in years_data and year < years_data["first"]):
+            return False
+        return True
+
+
     def __filter_for_year(self, dict, year: int):
         filtered_teams = {}
         for team_name in self.all_teams:
             team_data = self.all_teams[team_name]
-            if "years" in team_data:
-                year_data = team_data["years"]
-                if ("missing" not in year_data or year not in year_data["missing"]) or \
-                    ("first" not in year_data or year >= year_data["first"]) or \
-                    ("last" not in year_data or year <= year_data["last"]):
-                    filtered_teams[team_name] = team_data
-            else:
+            if self.year_is_valid_for_team(team_data, year):
                 filtered_teams[team_name] = team_data
         return filtered_teams
 

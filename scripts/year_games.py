@@ -1,8 +1,6 @@
-from re import L
-import time
+from __future__ import annotations
 
-#from ast import Dict
-#from calendar import Day
+import time
 
 from ifile_handler import IFile_Handler
 from iall_teams import IAll_Teams
@@ -25,7 +23,11 @@ class Year_Games():
             print(f"Unknown team, {team_raw} ({team_name})")
             return []
 
-        # games = self.teams.get_team_games(team_name, year, force)
+        team_data = all_teams[team_name]
+        if not self.iall_teams.year_is_valid_for_team(team_data, int(year)):
+            print(f"Invalid year, {year}, for team, {team_name}")
+            return []
+
         games = None
         local_file = False
 
@@ -86,7 +88,7 @@ class Year_Games():
 
 
     def get_all_games_for_all_team_in_year(self, year: str, force=False):
-        all_teams = self.iall_teams.get_all_teams(self.ifile_handler)
+        all_teams = self.iall_teams.get_all_teams()
         for team_name in all_teams:
             updateMade = self.get_all_game_for_team_in_year(team_name, year, force)
             if updateMade:
@@ -127,4 +129,3 @@ class Year_Games():
             total_days += extra_days
 
         return (int(total_days / 7) - 1)
-

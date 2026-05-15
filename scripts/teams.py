@@ -2,12 +2,12 @@
 Usage:
   python get_teams.py --force # re-fetch and overwrite
 """
+from __future__ import annotations
 
 from iall_teams import IAll_Teams
 from ifile_handler import IFile_Handler
 from iurl_handler import IUrl_Handler
 from parse_game_data_file import Parse_Game_Data_File
-from utils import Utils
 
 class Teams:
 

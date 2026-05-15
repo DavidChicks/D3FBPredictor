@@ -5,10 +5,10 @@ Create a dictionary conveying all the stats for the data page
 This is tied to the HTML format from d3football.com
     seasons/{year}/boxscores/{page}.xml
 """
-# from __future__ import annotations
+from __future__ import annotations
+
 import stat
 from typing import  ClassVar
-#import json
 from utils import Utils
 import re
 from game_statistics import Game_Statistics
