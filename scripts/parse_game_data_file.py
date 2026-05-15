@@ -5,10 +5,10 @@ Create a dictionary conveying all the stats for the data page
 This is tied to the HTML format from d3football.com
     seasons/{year}/boxscores/{page}.xml
 """
-from __future__ import annotations
+# from __future__ import annotations
 import stat
-from typing import Optional, ClassVar
-import json
+from typing import  ClassVar
+#import json
 from utils import Utils
 import re
 from game_statistics import Game_Statistics
@@ -391,7 +391,7 @@ class Parse_Game_Data_File:
             home_stats[stat] = cells[2].get_text(strip=True)
 
 
-    def __get_score_from_td_cell(self, cell) -> Optional[str]:
+    def __get_score_from_td_cell(self, cell) -> str:
         spans = cell.find_all("span")
         if spans is None or len(spans) < 1:
             return None
@@ -447,7 +447,7 @@ class Parse_Game_Data_File:
         return statistics
 
 
-    def get_game_score(self, game_page) -> Optional[dict]:
+    def get_game_score(self, game_page) -> dict:
         scores_div = game_page.find_all("div", class_="stats-wrapper clearfix")
         if scores_div is None or len(scores_div) == 0:
             return None
@@ -471,7 +471,7 @@ class Parse_Game_Data_File:
         return list(Parse_Game_Data_File.stat_rename.values())
 
 
-    def get_game_stats(self, game_page) -> Optional[dict]:
+    def get_game_stats(self, game_page) -> dict:
         teams_tables = game_page.find_all("table", class_="all-center")
         if teams_tables is None or len(teams_tables) == 0:
             return None

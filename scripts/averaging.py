@@ -13,13 +13,8 @@ Create a dictionary conveying all the averages
 
 import json
 import statistics
-from math import e
-import re
-from typing import Optional
 from iall_teams import IAll_Teams
 from ifile_handler import IFile_Handler
-from teams import Parse_Game_Data_File
-from game_statistics import Game_Statistics
 
 class Averaging:
     team = None
@@ -69,7 +64,7 @@ class Averaging:
 
 
     @staticmethod
-    def _parse_numeric(v) -> Optional[float]:
+    def _parse_numeric(v) -> float:
         if v is None:
             return None
         if isinstance(v, (int, float)):
@@ -181,7 +176,7 @@ class Averaging:
         self.opp_all_stats["score"] = []
 
 
-    def __load_game_file(self, game_file: str, is_home: bool): # -> Optional[dict]:
+    def __load_game_file(self, game_file: str, is_home: bool):
         game_data = self.ifile_handler.load_game_file(year=self.year, game_file_name=game_file)
         if (game_data is None) or (not isinstance(game_data, dict)):
             print(f"Failed to load game file {game_file} for year {self.year}")

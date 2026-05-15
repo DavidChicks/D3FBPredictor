@@ -2,16 +2,12 @@
 Usage:
   python get_teams.py --force # re-fetch and overwrite
 """
-from __future__ import annotations
-import re
-from typing import Optional
-import ifile_handler
+
 from iall_teams import IAll_Teams
-from iurl_handler import IUrl_Handler
 from ifile_handler import IFile_Handler
+from iurl_handler import IUrl_Handler
 from parse_game_data_file import Parse_Game_Data_File
 from utils import Utils
-import time
 
 class Teams:
 
@@ -84,7 +80,7 @@ class Teams:
         return d3games
 
 
-    def get_game_stats(self, game_url: str) -> Optional[dict]:
+    def get_game_stats(self, game_url: str) -> dict:
         try:
             game_page = self.iurl_handler.get_game_page(game_url, 3)
             if game_page is None:

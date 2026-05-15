@@ -16,17 +16,9 @@ data/
 from __future__ import annotations
 
 import json
-import logging
 import os
-import pprint
-import re
-from unicodedata import normalize
-from xmlrpc.client import boolean
-import requests
-from typing import Optional
-from utils import Utils
-
 from ifile_handler import IFile_Handler
+from utils import Utils
 
 DATA_ROOT = "data"
 TEAMS_FOLDER = "teams"

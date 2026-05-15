@@ -4,15 +4,15 @@ Usage:
   python get_teams.py         # fetch and save to data/teams_index.html (uses cache)
   python get_teams.py --force # re-fetch and overwrite
 """
-from __future__ import annotations
+#from __future__ import annotations
 
-import argparse
-import json
+#import argparse
+#import json
 import logging
 import os
-from re import M
+#from re import M
 import requests
-import time
+#import time
 from bs4 import BeautifulSoup
 
 from iurl_handler import IUrl_Handler

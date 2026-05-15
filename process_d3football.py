@@ -7,19 +7,19 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
-from re import A
-#import logging
-import requests
+#import json
+#from re import A
+import logging
+#import requests
 import sys
-from typing import Optional
+#from typing import Optional
 
 
 sys.path.insert(1, './scripts')
 
 from all_teams import All_Teams
 from averaging import Averaging
-#from build_ai_data import Build_AI_Data
+from build_ai_data import Build_AI_Data
 from file_handler import File_Handler
 from url_handler import Url_Handler
 from all_teams import All_Teams
@@ -77,10 +77,10 @@ def main() -> None:
         else:
             averaging.get_team_year_files()
 
-    #if (args.ai_generator):
-    #    print(f"Building AI data for year {year}...")
-    #    ai_data_builder = Build_AI_Data(ifile_handler=file_handler, year=year)
-    #    ai_data_builder.build_ai_data()
+    if (args.ai_generator):
+        print(f"Building AI data for year {year}...")
+        ai_data_builder = Build_AI_Data(ifile_handler=file_handler, year=year)
+        ai_data_builder.build_ai_data()
 
 
 if __name__ == "__main__":
