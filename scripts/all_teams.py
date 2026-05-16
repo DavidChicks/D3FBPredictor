@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from iall_teams import IAll_Teams
 from ifile_handler import IFile_Handler
 from utils import Utils
@@ -17,7 +19,7 @@ class All_Teams(IAll_Teams):
         if self.all_teams is None:
             self.all_teams = self.ifile_handler.get_all_teams()
             if self.all_teams is None:
-                print("Failed to load teams data.")
+                logging.error("Failed to load teams data.")
                 return {}
         return self.all_teams
 
@@ -31,6 +33,9 @@ class All_Teams(IAll_Teams):
 
 
     def year_is_valid_for_team(self, team_data: dict, year: int) -> bool:
+        if year == 2020:
+            logging.info("Ignoring year 2020 due to Covid")
+            return False
         if "years" not in team_data:
             return True
         years_data = team_data["years"]

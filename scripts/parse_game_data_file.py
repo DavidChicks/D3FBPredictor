@@ -7,6 +7,7 @@ This is tied to the HTML format from d3football.com
 """
 from __future__ import annotations
 
+import logging
 import stat
 from typing import  ClassVar
 from utils import Utils
@@ -265,8 +266,8 @@ class Parse_Game_Data_File:
             else:
                 fields.append(child)
         if len(fields) != expected_parts_count:
-            print(f"!!! Incorrect split count in cell for stat {cell} (expected {expected_parts_count} but got {len(fields)}) !!!")
-            print(f"    Away Team: {self.away_team}, Home Team: {self.home_team}")
+            logging.error(f"!!! Incorrect split count in cell for stat {cell} (expected {expected_parts_count} but got {len(fields)}) !!!")
+            logging.error(f"    Away Team: {self.away_team}, Home Team: {self.home_team}")
             return None
         return fields
 
@@ -358,7 +359,7 @@ class Parse_Game_Data_File:
         cells = row.find_all("td")
         if len(cells) != 3:
             if not "Statistics" in row.get_text():
-                print(f"     Incorrect cell count in row ({len(cells)}) of row {row}, skipping")
+                logging.error(f"     Incorrect cell count in row ({len(cells)}) of row {row}, skipping")
             return
 
         stat = cells[1].get_text(strip=True)
@@ -412,7 +413,7 @@ class Parse_Game_Data_File:
             elif stat_name in stats:
                 value = stats[stat_name]
             else:
-                print(f"Stat '{stat_name}' not found in stats, skipping renaming for this stat.")
+                logging.warn(f"Stat '{stat_name}' not found in stats, skipping renaming for this stat.")
                 continue
 
             #################################
@@ -423,7 +424,7 @@ class Parse_Game_Data_File:
                 try:
                     # handle empty strings gracefully
                     if value == "" or value is None:
-                        print(f"Warning: Empty value for stat '{stat_value}', setting to None")
+                        logging.info(f"Warning: Empty value for stat '{stat_value}', setting to None")
                         coerced = None
                     else:
                         coerced = expected_type(value)
@@ -434,7 +435,7 @@ class Parse_Game_Data_File:
                     # fall through to assignment below
                     pass
             else:
-                print(f"No expected type defined for stat '{stat_value}', assigning value as-is: {value}")
+                logging.warn(f"No expected type defined for stat '{stat_value}', assigning value as-is: {value}")
             #################################
 
             try:
@@ -443,7 +444,7 @@ class Parse_Game_Data_File:
                 try:
                     statistics[stat_value] = value
                 except Exception:
-                    print(f"Failed to assign stat '{stat_value}' on Game_Statistics")
+                    logging.error(f"Failed to assign stat '{stat_value}' on Game_Statistics")
         return statistics
 
 

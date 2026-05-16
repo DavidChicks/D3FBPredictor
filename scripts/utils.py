@@ -1,5 +1,5 @@
 """Utility helpers."""
-#from __future__ import annotations
+from __future__ import annotations
 
 class Utils:
     @staticmethod
@@ -17,7 +17,6 @@ class Utils:
 
     @staticmethod
     def add_element_to_list_at_index(lst: list, index: int, element):
-        #print(f"  Adding element at index {index}: {element}")
         while len(lst) <= index:
             lst.append(None)
         lst[index] = element

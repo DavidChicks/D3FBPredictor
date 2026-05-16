@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from calendar import SEPTEMBER
 import time
 
 from ifile_handler import IFile_Handler
@@ -25,7 +26,7 @@ class Year_Games():
 
         team_data = all_teams[team_name]
         if not self.iall_teams.year_is_valid_for_team(team_data, int(year)):
-            print(f"Invalid year, {year}, for team, {team_name}")
+            print(f"  Skipping year/tema (did not play): {year} for {team_name}")
             return []
 
         games = None
@@ -43,7 +44,7 @@ class Year_Games():
                 games = self.teams.get_team_games_from_web(team_name, year)
                 local_file = False
             else:
-                print(f"  Team file for {team_name} contains data for year {year}, using local file.")
+                print(f"  Local file found, skipping download: {team_name} - {year}.")
                 games = team_data_all_years[str(year)]
                 local_file = True
     
@@ -79,7 +80,7 @@ class Year_Games():
             file_saved = self.teams.get_and_save_game_stats(game_link, year_str)
             if file_saved:
                 at_least_one_file_updated = True
-            time.sleep(3)
+            time.sleep(5)
 
         # TODO: keep existing data if the file already exists, and only add new games to it (don't overwrite existing data)
         if at_least_one_file_updated or not local_file:
@@ -99,6 +100,7 @@ class Year_Games():
 
     def __get_week_from_file_name(self, file_name: str) -> int:
         # extract the week from a file name like "20240907_linfield_wooster.json"
+        # earliest possible game is Sept 1st, so assume the week from 1-7 is first week, etc.
         parts = file_name.split(".")[0].split("_")
         if len(parts) < 2:
             print(f"Unexpected file name format; expected at least 3 parts but got: {parts}")
@@ -115,17 +117,8 @@ class Year_Games():
             print(f"Failed to extract date from file name: {file_name}: year={year}, month={month}, day={day}")
             return None
         
-        total_days = (month - 9) * 30 + day
+        total_days = (month - 9) * 30 + day - 1 # -1 shift from 1-7 to 0-6
         if month > 10: # October has 31 days, so we need to account for that
             total_days += 1
 
-        if year and year > 1999:
-            extra_days = (year - 1999)
-            # If leap year, increase by 2
-            leap_days = int((year - 1996) / 4) # - (year_int - 2000) // 100 + (year_int - 2000) // 400
-            extra_days += leap_days
-            if extra_days >= 7:
-                extra_days = extra_days % 7
-            total_days += extra_days
-
-        return (int(total_days / 7) - 1)
+        return int(total_days / 7)

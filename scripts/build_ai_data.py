@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from curses import raw
+import logging
 import numpy as np
 import tensorflow as tf
 from ifile_handler import IFile_Handler
@@ -35,7 +36,7 @@ class Build_AI_Data:
         all_games = self.ifile_handler.get_all_game_file_names(self.year)
 
         if (all_games is None or len(all_games) == 0):
-            print("No game files found for year", self.year)
+            logging.info("No game files found for year", self.year)
             return
 
         self.__get_model()
@@ -77,10 +78,10 @@ class Build_AI_Data:
         away_stats = self.team_data[away_team]
         home_stats = self.team_data[home_team]
         if away_stats is None:
-            print(f"Error: No team data found for away team {away_team} for year {self.year}")
+            logging.error(f"Error: No team data found for away team {away_team} for year {self.year}")
             afoo = 1 / 0
         if home_stats is None:
-            print(f"Error: No team data found for home team {home_team} for year {self.year}")
+            logging.error(f"Error: No team data found for home team {home_team} for year {self.year}")
             hfoo = 1 / 0
 
         away_team_stats_normalized = []
@@ -105,11 +106,11 @@ class Build_AI_Data:
         # Implement logic to ensure that the normalization file exists and is up to date
         normaillzation_data = self.ifile_handler.load_ai_normalization_file(self.year)
         if normaillzation_data is None:
-            print("Normalization file not found for year", self.year)
+            logging.info("Normalization file not found for year", self.year)
             normaillzation_data = self.__generate_normailziation_file()
             self.ifile_handler.save_ai_normalization_file(self.year, normaillzation_data)
         else:
-            print("Normalization file already exists for year", self.year)
+            logging.info("Normalization file already exists for year", self.year)
         return normaillzation_data
 
 
@@ -117,7 +118,7 @@ class Build_AI_Data:
         averages_files = self.ifile_handler.get_all_averages_files(self.year)
         # print(f"Found averages files for year {self.year} : {averages_files}")
         if averages_files is None or len(averages_files) == 0:
-            print("No averages files found for year", self.year)
+            logging.info("No averages files found for year", self.year)
             return
 
         raw_stats = self.__get_all_stats_name()

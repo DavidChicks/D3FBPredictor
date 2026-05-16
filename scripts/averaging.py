@@ -12,6 +12,7 @@ Create a dictionary conveying all the averages
 from __future__ import annotations
 
 import json
+import logging
 import statistics
 from iall_teams import IAll_Teams
 from ifile_handler import IFile_Handler
@@ -54,7 +55,7 @@ class Averaging:
                 with open(path, "r", encoding="utf-8") as fh:
                     data = json.load(fh)
             except Exception as e:
-                print(f"Failed to open/parse '{path}': {e}")
+                logging.warn(f"Failed to open/parse '{path}': {e}")
                 continue
 
             away = data.get("away_stats") or {}
@@ -132,7 +133,7 @@ class Averaging:
 
 
     def get_team_year_files(self) -> dict:
-        print(f"Calculating stats for team {self.team} in year {self.year}...")
+        logging.info(f"Calculating stats for team {self.team} in year {self.year}...")
         team_year_data = self.__load_team_year_file()
         if team_year_data is None or not isinstance(team_year_data, list):
             return []
@@ -152,8 +153,8 @@ class Averaging:
                     else:
                         game_lists["away"].append(game_file)
             week += 1
-        print(f"    home: {game_lists['home']}")
-        print(f"    away: {game_lists['away']}")
+        logging.info(f"    home: {game_lists['home']}")
+        logging.info(f"    away: {game_lists['away']}")
 
         for game_file in game_lists["home"]:
             self.__load_game_file(game_file, True)
@@ -179,7 +180,7 @@ class Averaging:
     def __load_game_file(self, game_file: str, is_home: bool):
         game_data = self.ifile_handler.load_game_file(year=self.year, game_file_name=game_file)
         if (game_data is None) or (not isinstance(game_data, dict)):
-            print(f"Failed to load game file {game_file} for year {self.year}")
+            logging.error(f"Failed to load game file {game_file} for year {self.year}")
             return
 
         team_stats = game_data["home_stats"] if is_home else game_data["away_stats"]

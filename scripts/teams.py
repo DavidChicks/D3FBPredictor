@@ -4,6 +4,8 @@ Usage:
 """
 from __future__ import annotations
 
+import logging
+
 from iall_teams import IAll_Teams
 from ifile_handler import IFile_Handler
 from iurl_handler import IUrl_Handler
@@ -29,14 +31,14 @@ class Teams:
         try:
             page = self.iurl_handler.get_team_page(team_url_part, year, 3)
         except Exception as e:
-            print(f"Error fetching team page for {team} in year {year}: {e}")
+            logging.error(f"Error fetching team page for {team} in year {year}: {e}")
             return None
         if page is None:
-            print("  Failed to get team page.")
+            logging.error("  Failed to get team page.")
             return None
         teams_schedule = page.find_all("table", class_="schedule") 
         if (teams_schedule is None or len(teams_schedule) == 0 or teams_schedule[0] is None):
-            print("  Failed to find schedule table on team page.")
+            logging.warn("  Failed to find schedule table on team page.")
             return None
         rows = teams_schedule[0].find_all("tr")
         d3games = []
@@ -48,11 +50,10 @@ class Teams:
             row_text = row.get_text()
         
             if "•" in row_text:
-                # print(f" @@ row_text: {row_text}")
                 tds = row.find_all("td")
                 if len(tds) < 4:
                     if not "Overall record:" in row_text and not "Conference:" in row_text:
-                        print(f"Cannot find expected table data cells with {row_text}")
+                        logging.warn(f"Cannot find expected table data cells with {row_text}")
                     continue
 
                 location = tds[1].get_text().strip()[:2]
@@ -84,10 +85,10 @@ class Teams:
         try:
             game_page = self.iurl_handler.get_game_page(game_url, 3)
             if game_page is None:
-                print("Failed to get game page.")
+                logging.error("Failed to get game page.")
                 return None
         except Exception as e:
-            print(f"Error fetching game page for {game_url}: {e}")
+            logging.error(f"Error fetching game page for {game_url}: {e}")
             return None
         parser = Parse_Game_Data_File()
         stats = parser.get_game_stats(game_page)

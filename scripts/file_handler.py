@@ -16,6 +16,7 @@ data/
 from __future__ import annotations
 
 import json
+import logging
 import os
 from ifile_handler import IFile_Handler
 from utils import Utils
@@ -63,13 +64,13 @@ class File_Handler(IFile_Handler):
     def __load_file(self, file_path_name: str, create_if_missing: bool = False):
         if not os.path.isfile(file_path_name):
             if create_if_missing:
-                print(f"File, {file_path_name}, not found; creating new file.")
+                logging.info(f"File, {file_path_name}, not found; creating new file.")
             return None
         try:
             with open(file_path_name, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
-            print(f"Failed to load data for file, {file_path_name}: {e}")
+            logging.error(f"Failed to load data for file, {file_path_name}: {e}")
             return None
 
 
@@ -81,7 +82,7 @@ class File_Handler(IFile_Handler):
             with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(teams, f, indent=2, ensure_ascii=False)
         except Exception as e:
-            print(f"Failed to save all teams to {out_path}: {e}")
+            logging.error(f"Failed to save all teams to {out_path}: {e}")
 
 
     def save_ai_normalization_file(self, year: str, normalization_data: dict) -> None:
@@ -91,7 +92,7 @@ class File_Handler(IFile_Handler):
             with open(normalization_file_path, "w", encoding="utf-8") as f:
                 json.dump(normalization_data, f, indent=2, ensure_ascii=False)
         except Exception as e:
-            print(f"Failed to save AI normalization file for year {year}: {e}")
+            logging.error(f"Failed to save AI normalization file for year {year}: {e}")
 
 
     def __ensure_all_dirs(self):
@@ -132,7 +133,7 @@ class File_Handler(IFile_Handler):
             print(f"Loaded all teams from {all_teams_path} (count={len(teams)})")
             return teams
         except Exception as e:
-            print(f"Failed to load all teams from {all_teams_path}: {e}")
+            logging.error(f"Failed to load all teams from {all_teams_path}: {e}")
             return None
 
 
@@ -163,7 +164,7 @@ class File_Handler(IFile_Handler):
     def load_ai_normalization_file(self, year: str) -> dict:
         normalization_file_path = os.path.join(DATA_ROOT, AVERAGE_FOLDER, year, NORMALIZATION_FILE_NAME)
         if not os.path.exists(normalization_file_path):
-            print(f"Normalization file not found at {normalization_file_path}")
+            logging.info(f"Normalization file not found at {normalization_file_path}")
             return None
         try:
             with open(normalization_file_path, "r", encoding="utf-8") as f:
@@ -171,7 +172,7 @@ class File_Handler(IFile_Handler):
             print(f"Loaded normalization data from {normalization_file_path}")
             return normalization_data
         except Exception as e:
-            print(f"Failed to load normalization data from {normalization_file_path}: {e}")
+            logging.error(f"Failed to load normalization data from {normalization_file_path}: {e}")
             return None
 
 
@@ -183,7 +184,7 @@ class File_Handler(IFile_Handler):
             with open(team_file_name, "w", encoding="utf-8") as f:
                 json.dump(team_data, f, indent=2, ensure_ascii=False)
         except Exception as e:
-            print(f"Failed to update team file for {team_name} at {team_file_name}: {e}")
+            logging.error(f"Failed to update team file for {team_name} at {team_file_name}: {e}")
 
 
     def save_game_file(self, game_url: str, stats: dict, year: str):
@@ -198,9 +199,9 @@ class File_Handler(IFile_Handler):
             os.makedirs(os.path.dirname(games_year_dir), exist_ok=True)
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(stats, f, indent=2, ensure_ascii=False)
-            print(f"Saved game stats to {file_path}")
+            logging.debug(f"Saved game stats to {file_path}")
         except Exception as e:
-            print(f"Failed to save stats to {file_path}: {e}")
+            logging.error(f"Failed to save stats to {file_path}: {e}")
 
        
     def save_statisical_file(self, team_name: str, year: str, stats: dict):
@@ -213,7 +214,7 @@ class File_Handler(IFile_Handler):
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(stats, f, indent=2, ensure_ascii=False)
         except Exception as e:
-            print(f"Failed to save stats to {file_path}: {e}")
+            logging.eror(f"Failed to save stats to {file_path}: {e}")
 
 
     def team_file_exists(self, team: str) -> bool:
