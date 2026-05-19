@@ -1,23 +1,26 @@
 """
 Average stats for a given year team
-
+Mean (average), Median, and Standard Deviation for each stat over the games of the year
 Create a dictionary conveying all the averages
     team_all_stats
     opponent_all_stats
-    team_home_stats
-    team_away_stats
-    oppoenent_home_stats
-    oppoenent_away_stats
+    TBD team_home_stats
+    TBD team_away_stats
+    TBD opponent_home_stats
+    TBD opponent_away_stats
 """
 from __future__ import annotations
 
 import json
 import logging
+import re
 import statistics
 from iall_teams import IAll_Teams
 from ifile_handler import IFile_Handler
+from parse_game_data_file import Parse_Game_Data_File
 
 class Averaging:
+    MINIMUM_GAMES = 3
     team = None
     year = None
     team_all_stats = {}
@@ -25,7 +28,7 @@ class Averaging:
     away_count = 0
     home_count = 0
 
-    def __init__(self, ifile_handler: IFile_Handler, iall_teams: IAll_Teams, team: str = "", year: str=""):
+    def __init__(self, ifile_handler: IFile_Handler, team: str = "", year: str=""):
         """Create an Averaging instance that may operate on a given file.
 
         Args:
@@ -34,38 +37,25 @@ class Averaging:
         self.team = team
         self.year = year
         self.ifile_handler = ifile_handler
-        self.iall_teams = iall_teams
+
+    @staticmethod
+    def calculate_and_save_stats_for_all_teams(iall_teams: IAll_Teams, ifile_handler: IFile_Handler, year: str): # , week: int = 11):
+        all_teams = iall_teams.get_all_teams_for_year(year)
+        for team_name in all_teams:
+            averaging = Averaging(ifile_handler=ifile_handler, team=team_name, year=year)
+            games = averaging.calculate_and_save_stats()
 
 
-    def calculate_stats(self): # , week: int = 11):
-        games = self.get_team_year_files()
-
-
-    def average_away_stats_from_files(self, file_paths: list[str]) -> dict[str, float]:
-        # wrapper that reads files then computes averages
-        away_list = self.read_away_stats_from_files(file_paths)
-        return self.compute_averages_from_away_stats(away_list)
-
-
-    def read_away_stats_from_files(self, file_paths: list[str]) -> list[dict]:
-        """Read JSON files and return a list of `away_stats` dicts found in them."""
-        away_list: list[dict] = []
-        for path in file_paths:
-            try:
-                with open(path, "r", encoding="utf-8") as fh:
-                    data = json.load(fh)
-            except Exception as e:
-                logging.warn(f"Failed to open/parse '{path}': {e}")
-                continue
-
-            away = data.get("away_stats") or {}
-            if isinstance(away, dict):
-                away_list.append(away)
-        return away_list
+    def calculate_and_save_stats(self): # , week: int = 11):
+        logging.info(f"Calculating stats for {self.team} - {self.year}")
+        stats_for_year = self.__get_team_year_files()
+        if len(stats_for_year) == 0:
+            return
+        self.ifile_handler.save_statisical_file(self.team, self.year, stats_for_year)
 
 
     @staticmethod
-    def _parse_numeric(v) -> float:
+    def __parse_numeric(v) -> float:
         if v is None:
             return None
         if isinstance(v, (int, float)):
@@ -94,30 +84,6 @@ class Averaging:
         return None
 
 
-    @staticmethod
-    def compute_averages_from_stats(away_stats_list: list[dict]) -> dict[str, float]:
-        """Compute averages for each stat key from a list of away_stats dicts."""
-        sums: dict[str, float] = {}
-        counts: dict[str, int] = {}
-
-        for away in away_stats_list:
-            if not isinstance(away, dict):
-                continue
-            for key, raw_val in away.items():
-                val = Averaging._parse_numeric(raw_val)
-                if val is None:
-                    continue
-                sums[key] = sums.get(key, 0.0) + val
-                counts[key] = counts.get(key, 0) + 1
-
-        averages: dict[str, float] = {}
-        for k, s in sums.items():
-            c = counts.get(k, 0)
-            if c > 0:
-                averages[k] = s / c
-        return averages
-
-    
     def __load_team_year_file(self):
         team_data = self.ifile_handler.load_team_file(self.team, False)
         if (team_data is None) or (self.year not in team_data):
@@ -125,17 +91,14 @@ class Averaging:
         return team_data[self.year]
 
 
-    def get_all_teams_for_year_files(self, year: str) -> dict[str, list[str]]:
-        all_teams = self.iall_teams.get_all_teams(self.ifile_handler)
-        for team_name in all_teams:
-            averaging = Averaging(ifile_handler=self.ifile_handler, team=team_name, year=year)
-            games = averaging.get_team_year_files()
-
-
-    def get_team_year_files(self) -> dict:
+    def __get_team_year_files(self) -> dict:
         logging.info(f"Calculating stats for team {self.team} in year {self.year}...")
         team_year_data = self.__load_team_year_file()
         if team_year_data is None or not isinstance(team_year_data, list):
+            return []
+        if len(team_year_data) < Averaging.MINIMUM_GAMES or \
+            len(list(filter(lambda x: x is not None, team_year_data))) < Averaging.MINIMUM_GAMES:
+            logging.info(f"  Too few games, {len(team_year_data)}, skipping")
             return []
         game_lists = {
             "away": [],
@@ -164,7 +127,6 @@ class Averaging:
         result = {}
         result["team_stats"] = self.__calcuatate_mean_median_stddev_for_all_stats(self.team_all_stats)
         result["opp_stats"] = self.__calcuatate_mean_median_stddev_for_all_stats(self.opp_all_stats)
-        self.ifile_handler.save_statisical_file(self.team, self.year, result)
         return result
 
 
@@ -190,9 +152,9 @@ class Averaging:
 
         stat_names = Parse_Game_Data_File().get_stat_names()
         for stat in stat_names:
-            if stat in team_stats:
+            if stat in team_stats and isinstance(stat, (int, float)):
                 self.team_all_stats[stat].append(team_stats.get(stat, 0.0))
-            if stat in opp_stats:
+            if stat in opp_stats and isinstance(stat, (int, float)):
                 self.opp_all_stats[stat].append(opp_stats.get(stat, 0.0))
         self.team_all_stats["score"].append(game_data["home_score"] if is_home else game_data["away_score"])
         self.opp_all_stats["score"].append(game_data["away_score"] if is_home else game_data["home_score"])
@@ -203,7 +165,7 @@ class Averaging:
         result = {}
         for stat in stat_names:
             values = all_stats.get(stat, [])
-            nums = [self._parse_numeric(v) for v in values if self._parse_numeric(v) is not None]
+            nums = [self.__parse_numeric(v) for v in values if self.__parse_numeric(v) is not None]
             count = len(nums)
             if count == 0:
                 result[stat] = {"mean": None, "median": None, "stddev": None, "count": 0}

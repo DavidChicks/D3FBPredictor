@@ -5,6 +5,7 @@ Usage:
 from __future__ import annotations
 
 import logging
+import time
 
 from iall_teams import IAll_Teams
 from ifile_handler import IFile_Handler
@@ -29,16 +30,19 @@ class Teams:
         team_url_part = self.__get_team_url_part(team)
         retries = 3
         try:
+            logging.info(f"    Fetching from web -- {team} - {year}")
             page = self.iurl_handler.get_team_page(team_url_part, year, 3)
+            logging.info("      Sleeping for 2 seconds after getting team page")
+            time.sleep(2)
         except Exception as e:
             logging.error(f"Error fetching team page for {team} in year {year}: {e}")
             return None
         if page is None:
-            logging.error("  Failed to get team page.")
+            logging.error("Failed to get team page.")
             return None
         teams_schedule = page.find_all("table", class_="schedule") 
         if (teams_schedule is None or len(teams_schedule) == 0 or teams_schedule[0] is None):
-            logging.warn("  Failed to find schedule table on team page.")
+            logging.warning("  Failed to find schedule table on team page.")
             return None
         rows = teams_schedule[0].find_all("tr")
         d3games = []
@@ -83,6 +87,7 @@ class Teams:
 
     def get_game_stats(self, game_url: str) -> dict:
         try:
+            logging.info(f"    Fetch game from web: {game_url}")
             game_page = self.iurl_handler.get_game_page(game_url, 3)
             if game_page is None:
                 logging.error("Failed to get game page.")

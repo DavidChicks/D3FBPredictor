@@ -141,51 +141,6 @@ class Parse_Game_Data_File:
     }
 
 
-    #GameStatistics = {
-    #    "FIRST DOWNS": int,
-    #    "Passing": int,
-    #    "Rushing": int,
-    #    "Penalty": int,
-    #    "THIRD DOWN Conversions": int,
-    #    "THIRD DOWN Total":int,
-    #    "THIRD DOWN EFFICIENCY": float,
-    #    "FOURTH DOWN Conversions": int,
-    #    "FOURTH DOWN Total": int,
-    #    "FOURTH DOWN EFFICIENCY": float,
-    #    "TOTAL OFFENSE": int,
-    #    "Total Offensive Plays": int,
-    #    "Average gain per play": float,
-    #    "NET YARDS PASSING": int,
-    #    "Completions": int,
-    #    "Attempts": int,
-    #    "Net yards per pass play": float,
-    #    "Sacked: Number": int,
-    #    "Yards": int,
-    #    "Had intercepted": int,
-    #    "NET YARDS RUSHING": int,
-    #    "Rushing Attempts": int,
-    #    "Average gain per rush": float,
-    #    "PUNTS: Number": int,
-    #    "PUNTS: Yards": int,
-    #    "Average": "Punts_yards_average",
-    #    "TOTAL RETURN YARDS": int,
-    #    "Punt Returns: Number": int,
-    #    "Punt Returns: Yards": int,
-    #    "Kickoff Returns: Number": int,
-    #    "Kickoff Returns: Yards": int,
-    #    "Interception Returns: Number": int,
-    #    "Interception Returns: Yards": int,
-    #    "PENALTIES: Number": int,
-    #    "PENALTIES: Yards": int,
-    #    "FUMBLES: Number": int,
-    #    "FUMBLES: Lost": int,
-    #    "SACKS: Number": int,
-    #    "SACKS: Yards": int,
-    #    "INTERCEPTIONS: Number": int,
-    #    "INTERCEPTIONS: Yards": int,
-    #    "TIME OF POSSESSION": int,
-    #}
-
     stat_rename: ClassVar[dict] = {
         "FIRST DOWNS": "First_downs_total",
         "Passing": "First_downs_passing",
@@ -413,7 +368,7 @@ class Parse_Game_Data_File:
             elif stat_name in stats:
                 value = stats[stat_name]
             else:
-                logging.warn(f"Stat '{stat_name}' not found in stats, skipping renaming for this stat.")
+                logging.warning(f"Stat '{stat_name}' not found in stats, skipping renaming for this stat.")
                 continue
 
             #################################
@@ -424,7 +379,7 @@ class Parse_Game_Data_File:
                 try:
                     # handle empty strings gracefully
                     if value == "" or value is None:
-                        logging.info(f"Warning: Empty value for stat '{stat_value}', setting to None")
+                        logging.warning(f"Warning: Empty value for stat '{stat_value}', setting to None")
                         coerced = None
                     else:
                         coerced = expected_type(value)
@@ -435,7 +390,7 @@ class Parse_Game_Data_File:
                     # fall through to assignment below
                     pass
             else:
-                logging.warn(f"No expected type defined for stat '{stat_value}', assigning value as-is: {value}")
+                logging.warning(f"No expected type defined for stat '{stat_value}', assigning value as-is: {value}")
             #################################
 
             try:

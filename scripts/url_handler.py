@@ -25,6 +25,8 @@ class Url_Handler(IUrl_Handler):
         }
         resp = requests.get(url, headers=headers, timeout=timeout)
         resp.raise_for_status()
+        if len(resp.text) == 0:
+            raise requests.RequestException("Empty web page retured")
         return resp.text
 
 
@@ -34,7 +36,7 @@ class Url_Handler(IUrl_Handler):
         If a saved copy exists and force is False, the saved copy will be used.
         Otherwise the page is fetched and saved to `save_path`.
         """
-        logging.info("Fetching %s", url)
+        logging.debug("Fetching %s", url)
         retries = 0
         while True:
             try:
@@ -58,7 +60,7 @@ class Url_Handler(IUrl_Handler):
         return self.__get_page(full_url, max_retries)
 
 
-    def get_game_page(self, game_url: str, max_retries = 0) -> BeautifulSoup:
+    def get_game_page(self, game_url: str, max_retries) -> BeautifulSoup:
         ## https://www.d3football.com/seasons/2025/boxscores/20251115_82vt.xml
         url = Url_Handler.URL_ROOT + game_url
         return self.__get_page(url, max_retries)

@@ -24,6 +24,8 @@ from year_games import Year_Games
 
 
 def main() -> None:
+    fmt = '%(message)s'
+    logging.basicConfig(level=logging.INFO, format=fmt)
 
     parser = argparse.ArgumentParser()
     # parser.add_argument("--force", "-f", action="store_true", help="re-fetch even if cached")
@@ -44,7 +46,7 @@ def main() -> None:
 
     # logging.basicConfig(level=logging.INFO, "https://www.d3football.com/teams/index", force=args.force)
     if args.allteam:
-        print("Fetching all teams...")
+        logging.info("Fetching all teams...")
         all_teams = teams.get_and_save_all_teams()
         return
 
@@ -52,14 +54,14 @@ def main() -> None:
 
     year = args.year
     if year is None:
-        print("Must speicficy a year (-year / -y)")
+        logging.error("Must speicficy a year (-year / -y)")
         return
     team = args.team
     force = args.force
     # TODO: verify that year and team are valid (e.g. year is 4 digits, team is in all_teams)
     
     if args.games:
-        print(f"Fetching games for team {team} in year {year}...")
+        logging.info(f"Fetching games for team {team} in year {year}...")
         year_games = Year_Games(ifile_handler=file_handler, iall_teams=all_teams, teams=teams)
         if team in ("a", "all"):
             games = year_games.get_all_games_for_all_team_in_year(year, force)
@@ -67,14 +69,14 @@ def main() -> None:
             games = year_games.get_all_game_for_team_in_year(team, year, force)
 
     if args.stats:
-        averaging = Averaging(ifile_handler=file_handler, iall_teams=all_teams, team=team, year=year)
         if team in ("a", "all"):
-            averaging.get_all_teams_for_year_files(year=year)
+            Averaging.calculate_and_save_stats_for_all_teams(iall_teams=all_teams, ifile_handler=file_handler, year=year)
         else:
-            averaging.get_team_year_files()
+            averaging = Averaging(ifile_handler=file_handler, team=team, year=year)
+            averaging.calculate_and_save_stats()
 
     if (args.ai_generator):
-        print(f"Building AI data for year {year}...")
+        logging.info(f"Building AI data for year {year}...")
         ai_data_builder = Build_AI_Data(ifile_handler=file_handler, year=year)
         ai_data_builder.build_ai_data()
 

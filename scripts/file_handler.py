@@ -118,19 +118,20 @@ class File_Handler(IFile_Handler):
     def __ensure_averages_year_dir(self, year: str):
         self.__ensure_all_dirs()
         averages_dir = os.path.join(DATA_ROOT, AVERAGE_FOLDER)
-        #print(f"Ensuring averages year dir for {year} at {averages_dir}...")
-        os.makedirs(os.path.dirname(averages_dir), exist_ok=True)
+        year_dir = os.path.join(averages_dir, year)
+        os.makedirs(averages_dir, exist_ok=True)
+        os.makedirs(year_dir, exist_ok=True)
 
 
     def get_all_teams(self):
         all_teams_path = self.__get_team_file_path_name(ALL_TEAMS_FILE_NAME)
         if not os.path.exists(all_teams_path):
-            print(f"All teams file not found at {all_teams_path}")
+            logging.info(f"All teams file not found at {all_teams_path}")
             return None
         try:
             with open(all_teams_path, "r", encoding="utf-8") as f:
                 teams = json.load(f)
-            print(f"Loaded all teams from {all_teams_path} (count={len(teams)})")
+            logging.info(f"Loaded all teams from {all_teams_path} (count={len(teams)})")
             return teams
         except Exception as e:
             logging.error(f"Failed to load all teams from {all_teams_path}: {e}")
@@ -192,11 +193,11 @@ class File_Handler(IFile_Handler):
         year = year if year is not None else game_file_name[:4]
         self.__ensure_game_year_dir(year)
         games_year_dir = os.path.join(DATA_ROOT, GAMES_FOLDER, year)
-        os.makedirs(os.path.dirname(games_year_dir), exist_ok=True)
+        os.makedirs(games_year_dir, exist_ok=True)
         file_path = os.path.join(games_year_dir, game_file_name)
 
         try:
-            os.makedirs(os.path.dirname(games_year_dir), exist_ok=True)
+            os.makedirs(games_year_dir, exist_ok=True)
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(stats, f, indent=2, ensure_ascii=False)
             logging.debug(f"Saved game stats to {file_path}")
@@ -208,13 +209,13 @@ class File_Handler(IFile_Handler):
         team_file_name = Utils.normalize_name(team_name) + ".json"
         self.__ensure_averages_year_dir(year)
         averages_year_dir = os.path.join(DATA_ROOT, AVERAGE_FOLDER, year)
-        os.makedirs(os.path.dirname(averages_year_dir), exist_ok=True)
+        os.makedirs(averages_year_dir, exist_ok=True)
         file_path = os.path.join(averages_year_dir, team_file_name)
         try:
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(stats, f, indent=2, ensure_ascii=False)
         except Exception as e:
-            logging.eror(f"Failed to save stats to {file_path}: {e}")
+            logging.error(f"Failed to save stats to {file_path}: {e}")
 
 
     def team_file_exists(self, team: str) -> bool:
