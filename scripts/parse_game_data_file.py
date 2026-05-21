@@ -13,7 +13,7 @@ from typing import  ClassVar
 from utils import Utils
 import re
 from game_statistics import Game_Statistics
-
+from iall_teams import IAll_Teams
 class Parse_Game_Data_File:
     away_team: str
     home_team: str
@@ -427,7 +427,7 @@ class Parse_Game_Data_File:
         return list(Parse_Game_Data_File.stat_rename.values())
 
 
-    def get_game_stats(self, game_page) -> dict:
+    def get_game_stats(self, iall_teams: IAll_Teams, game_page) -> dict:
         teams_tables = game_page.find_all("table", class_="all-center")
         if teams_tables is None or len(teams_tables) == 0:
             return None
@@ -437,8 +437,8 @@ class Parse_Game_Data_File:
         rows = teams_tables[0].find_all("tr")
         team_name_row = rows[0]
         team_names = team_name_row.find_all("th")
-        self.away_team = Utils.normalize_name(team_names[0].get_text(strip=True))
-        self.home_team = Utils.normalize_name(team_names[2].get_text(strip=True))
+        self.away_team = iall_teams.get_primary_team_name(team_names[0].get_text(strip=True))
+        self.home_team = iall_teams.get_primary_team_name(team_names[2].get_text(strip=True))
 
         for row in rows:
             self.__process_row(row, away_stats, home_stats)
@@ -447,8 +447,8 @@ class Parse_Game_Data_File:
         missing = []
         away_stats  = self.__stat_renamer(away_stats)
         home_stats  = self.__stat_renamer(home_stats)
-        return_object["away_team"] = Utils.normalize_name(self.away_team)
-        return_object["home_team"] = Utils.normalize_name(self.home_team)
+        return_object["away_team"] = iall_teams.get_primary_team_name(self.away_team)
+        return_object["home_team"] = iall_teams.get_primary_team_name(self.home_team)
         return_object["away_stats"] = away_stats
         return_object["home_stats"] = home_stats
         return return_object

@@ -6,6 +6,9 @@ class IFile_Handler():
     def get_all_game_file_names(year: str) -> list:
         pass
 
+    def get_all_game_years() -> list:
+        pass
+
     def get_all_averages_files(year: str) -> list:
         pass
 

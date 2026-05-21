@@ -35,8 +35,7 @@ class File_Handler(IFile_Handler):
 
 
     def __get_team_file_path_name(self, team_name: str):
-        file_name = Utils.normalize_name(team_name) + ".json"
-        file_path_name = os.path.join(self.get_teams_root(), file_name)
+        file_path_name = os.path.join(self.get_teams_root(), team_name + ".json")
         return file_path_name
 
 
@@ -76,7 +75,6 @@ class File_Handler(IFile_Handler):
 
     def save_all_teams(self, teams: dict) -> None:
         try:
-            
             self.__ensure_all_dirs()
             out_path = self.__get_team_file_path_name(ALL_TEAMS_FILE_NAME)
             with open(out_path, "w", encoding="utf-8") as f:
@@ -150,10 +148,23 @@ class File_Handler(IFile_Handler):
         return game_files
 
 
+    def get_all_game_years(self) -> list:
+        year_dirs = []
+        games_dir = os.path.join(DATA_ROOT, GAMES_FOLDER)
+        with os.scandir(games_dir) as entries:
+            for entry in entries:
+                if entry.is_dir() and entry.name.isdigit:
+                    year_dirs.append(entry.name)
+        return year_dirs
+
+
     def get_all_averages_files(self, year: str) -> list:
         average_files = []
         averages_year_dir = os.path.join(DATA_ROOT, AVERAGE_FOLDER, year)
         # Only list files in the given directory
+        if not os.path.exists(averages_year_dir):
+            return []
+
         with os.scandir(averages_year_dir) as entries:
             for entry in entries:
                 if entry.is_file():
@@ -206,7 +217,7 @@ class File_Handler(IFile_Handler):
 
        
     def save_statisical_file(self, team_name: str, year: str, stats: dict):
-        team_file_name = Utils.normalize_name(team_name) + ".json"
+        team_file_name = team_name + ".json"
         self.__ensure_averages_year_dir(year)
         averages_year_dir = os.path.join(DATA_ROOT, AVERAGE_FOLDER, year)
         os.makedirs(averages_year_dir, exist_ok=True)

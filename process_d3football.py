@@ -53,8 +53,8 @@ def main() -> None:
     # TODO verify arguments are valid (e.g. year is 2 or 4 digits or "a/all", team is in all_teams or "a/all")
 
     year = args.year
-    if year is None:
-        logging.error("Must speicficy a year (-year / -y)")
+    if year is None and (args.games or args.stats):
+        logging.error("Must speicficy a year (-year / -y) for games or stats")
         return
     team = args.team
     force = args.force
@@ -72,12 +72,12 @@ def main() -> None:
         if team in ("a", "all"):
             Averaging.calculate_and_save_stats_for_all_teams(iall_teams=all_teams, ifile_handler=file_handler, year=year)
         else:
-            averaging = Averaging(ifile_handler=file_handler, team=team, year=year)
+            averaging = Averaging(ifile_handler=file_handler, iall_teams=all_teams, team=team, year=year)
             averaging.calculate_and_save_stats()
 
     if (args.ai_generator):
         logging.info(f"Building AI data for year {year}...")
-        ai_data_builder = Build_AI_Data(ifile_handler=file_handler, year=year)
+        ai_data_builder = Build_AI_Data(ifile_handler=file_handler)
         ai_data_builder.build_ai_data()
 
 

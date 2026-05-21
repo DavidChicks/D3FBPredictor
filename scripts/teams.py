@@ -96,7 +96,7 @@ class Teams:
             logging.error(f"Error fetching game page for {game_url}: {e}")
             return None
         parser = Parse_Game_Data_File()
-        stats = parser.get_game_stats(game_page)
+        stats = parser.get_game_stats(self.iall_teams, game_page)
         score = parser.get_game_score(game_page)
         if score:
             stats.update(score)

@@ -9,3 +9,6 @@ class IAll_Teams:
 
     def year_is_valid_for_team(team_data: dict, year: int) -> bool:
         pass
+
+    def get_primary_team_name(team_name: str) -> str:
+        pass

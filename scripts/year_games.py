@@ -19,14 +19,14 @@ class Year_Games():
         self.teams = teams
 
 
-    def get_all_game_for_team_in_year(self, team_raw: str, year: str, force) -> bool:
+    def get_all_game_for_team_in_year(self, team_name_raw: str, year: str, force) -> bool:
         at_least_one_file_updated = False
         all_teams = self.iall_teams.get_all_teams()
-        team_name = Utils.normalize_name(team_raw)
+        team_name = self.iall_teams.get_primary_team_name(team_name_raw)
+
         if team_name not in all_teams:
             logging.error(f"Unknown team, {team_raw} ({team_name})")
             return []
-
         team_data = all_teams[team_name]
         if not self.iall_teams.year_is_valid_for_team(team_data, int(year)):
             logging.info(f"  Skipping year/team (did not play): {year} for {team_name}")
@@ -41,7 +41,6 @@ class Year_Games():
             local_file = False
         else:
             team_data_all_years = self.ifile_handler.load_team_file(team_name, none_if_missing=True)
-            #print(f"Loaded team data for {team_name}: {team_data_all_years}")
             if team_data_all_years is None or str(year) not in team_data_all_years or team_data_all_years[str(year)] is None:
                 logging.info(f"Team file does not contain data for year, fetching from web: ***  {team_name} - {year}.")
                 games = self.teams.get_team_games_from_web(team_name, year)
@@ -64,7 +63,7 @@ class Year_Games():
             game_data = {}
             game_file_name = game["game_file"] if local_game else game["game_link"].split("/")[-1].replace(".xml", ".json")
             game_data["game_file"] = game_file_name
-            game_data["opponent"] = game["opponent"] if local_game else Utils.normalize_name(game["opponent_name"])
+            game_data["opponent"] = game["opponent"] if local_game else self.iall_teams.get_primary_team_name(game["opponent_name"])
             game_data["is_home"] = game["is_home"]
             week = self.__get_week_from_file_name(game_file_name)
             if week is None:

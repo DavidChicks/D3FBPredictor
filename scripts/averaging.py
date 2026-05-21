@@ -28,21 +28,21 @@ class Averaging:
     away_count = 0
     home_count = 0
 
-    def __init__(self, ifile_handler: IFile_Handler, team: str = "", year: str=""):
+    def __init__(self, ifile_handler: IFile_Handler, iall_teams: IAll_Teams, team: str, year: str):
         """Create an Averaging instance that may operate on a given file.
 
         Args:
             filename: path to a file to be associated with this Averaging instance.
         """
-        self.team = team
+        self.team = iall_teams.get_primary_team_name(team)
         self.year = year
-        self.ifile_handler = ifile_handler
+        self.ifile_handler = ifile_handler  
 
     @staticmethod
     def calculate_and_save_stats_for_all_teams(iall_teams: IAll_Teams, ifile_handler: IFile_Handler, year: str): # , week: int = 11):
         all_teams = iall_teams.get_all_teams_for_year(year)
         for team_name in all_teams:
-            averaging = Averaging(ifile_handler=ifile_handler, team=team_name, year=year)
+            averaging = Averaging(ifile_handler=ifile_handler, iall_teams=iall_teams, team=team_name, year=year)
             games = averaging.calculate_and_save_stats()
 
 
@@ -107,7 +107,7 @@ class Averaging:
         self.__create_stat_arrays()
         week = 0
         for weekly_game in team_year_data:
-            if  not weekly_game == None and isinstance(weekly_game, dict):
+            if not weekly_game == None and isinstance(weekly_game, dict):
                 game_file =  weekly_game["game_file"]
                 is_home = weekly_game["is_home"]
                 if isinstance(game_file, str) and game_file.strip() != "" and isinstance(is_home, bool):
@@ -151,10 +151,11 @@ class Averaging:
         opp_score = 0
 
         stat_names = Parse_Game_Data_File().get_stat_names()
+
         for stat in stat_names:
-            if stat in team_stats and isinstance(stat, (int, float)):
+            if stat in team_stats and isinstance(team_stats.get(stat, 0.0), (int, float)):
                 self.team_all_stats[stat].append(team_stats.get(stat, 0.0))
-            if stat in opp_stats and isinstance(stat, (int, float)):
+            if stat in opp_stats and isinstance(team_stats.get(stat, 0.0), (int, float)):
                 self.opp_all_stats[stat].append(opp_stats.get(stat, 0.0))
         self.team_all_stats["score"].append(game_data["home_score"] if is_home else game_data["away_score"])
         self.opp_all_stats["score"].append(game_data["away_score"] if is_home else game_data["home_score"])
