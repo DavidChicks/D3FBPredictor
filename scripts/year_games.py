@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-from calendar import SATURDAY, WEDNESDAY
-import datetime
 import logging
-from pickletools import decimalnl_long
 import time
 
 from ifile_handler import IFile_Handler
@@ -25,7 +22,7 @@ class Year_Games():
         team_name = self.iall_teams.get_primary_team_name(team_name_raw)
 
         if team_name not in all_teams:
-            logging.error(f"Unknown team, {team_raw} ({team_name})")
+            logging.error(f"Unknown team, {team_name_raw} ({team_name})")
             return []
         team_data = all_teams[team_name]
         if not self.iall_teams.year_is_valid_for_team(team_data, int(year)):
@@ -65,7 +62,7 @@ class Year_Games():
             game_data["game_file"] = game_file_name
             game_data["opponent"] = game["opponent"] if local_game else self.iall_teams.get_primary_team_name(game["opponent_name"])
             game_data["is_home"] = game["is_home"]
-            week = self.__get_week_from_file_name(game_file_name)
+            week = Utils.get_week_from_file_name(game_file_name)
             if week is None:
                 logging.error(f"Failed to extract week from game file name: {game_file_name}")
                 continue
@@ -98,45 +95,3 @@ class Year_Games():
                 logging.info("     Sleeping for 30 seconds to avoid overwhelming the server...")
                 time.sleep(30)
                 logging.info("     Done sleeping, continuing to next team.")
-
-
-    def __get_week_from_file_name(self, file_name: str) -> int:
-        # extract the week from a file name like "20240907_linfield_wooster.json"
-        # earliest possible game is Sept 1st, so assume the week from 1-7 is first week, etc.
-        parts = file_name.split(".")[0].split("_")
-        if len(parts) < 2:
-            logging.error(f"Unexpected file name format; expected at least 3 parts but got: {parts}")
-            return None
-        date_part = parts[0]
-        if len(date_part) != 8 or not date_part.isdigit():
-            logging.error(f"Unexpected date format in file name; expected 8 digits but got: {date_part}")
-            return None
-        month_day = date_part[4:]
-        year = int(date_part[:4])
-        month = int(month_day[:2])
-        day = int(month_day[2:])
-
-        if (year is None or month is None or day is None):
-            logging.error(f"Failed to extract date from file name: {file_name}: year={year}, month={month}, day={day}")
-            return None
-
-        game_day = datetime.date(year, month, day)
-        sept_first = datetime.date(year, 9, 1)
-        delta = abs((game_day - sept_first).days)
-        day_of_week = game_day.weekday() # 0 = Monday; 6 = Sunday
-        if not day_of_week == SATURDAY: 
-            if day_of_week > WEDNESDAY:
-                shift = SATURDAY - day_of_week
-            else:
-                shift = -(day_of_week + 2)
-            delta += shift
-        if delta < 0:
-            logging.info("Game day too early in year")
-            if year > 2025 and month == 1:
-                logging.info("National Championship game")
-                return 16
-            else:
-                logging.error("Invalid game date, irngoring")
-                return None
-
-        return int(delta / 7)

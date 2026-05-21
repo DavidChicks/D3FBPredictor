@@ -16,6 +16,7 @@ sys.path.insert(1, './scripts')
 from all_teams import All_Teams
 from averaging import Averaging
 from build_ai_data import Build_AI_Data
+from consistency_check import Consistency_Check
 from file_handler import File_Handler
 from url_handler import Url_Handler
 from all_teams import All_Teams
@@ -35,6 +36,7 @@ def main() -> None:
     parser.add_argument("--allteam", "-at", action="store_true", help="fetch all teams data (no game data) - no year/team used")
     parser.add_argument("--ai_generator", "-ai", action="store_true", help="build the ai input data files for the specified year")
     parser.add_argument("--games", "-g", action="store_true", help="get the games for team / year")
+    parser.add_argument("--consistency", "-c", action="store_true", help="consistency check")
     parser.add_argument("--stats", "-s", action="store_true", help="calculate stats for team / year")
     parser.add_argument("--force", "-f", action="store_true", help="re-fetch even if cached")
     args = parser.parse_args()
@@ -68,6 +70,14 @@ def main() -> None:
         else:
             games = year_games.get_all_game_for_team_in_year(team, year, force)
 
+    consistency_errors = False
+    if args.consistency:
+        if year in ("a", "all"):
+            consistency_errors =Consistency_Check.check_games_all_years(ifile_handler=file_handler, iall_teams=all_teams)
+        else:
+            consistency_check = Consistency_Check(ifile_handler=file_handler, iall_teams=all_teams, year=year)
+            consistency_errors = consistency_check.check_games()
+
     if args.stats:
         if team in ("a", "all"):
             Averaging.calculate_and_save_stats_for_all_teams(iall_teams=all_teams, ifile_handler=file_handler, year=year)
@@ -76,7 +86,7 @@ def main() -> None:
             averaging.calculate_and_save_stats()
 
     if (args.ai_generator):
-        logging.info(f"Building AI data for year {year}...")
+        logging.info(f"Building AI data")
         ai_data_builder = Build_AI_Data(ifile_handler=file_handler)
         ai_data_builder.build_ai_data()
 
