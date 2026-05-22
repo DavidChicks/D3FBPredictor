@@ -188,9 +188,18 @@ class File_Handler(IFile_Handler):
             return None
 
 
-    def update_team_file(self, team_name: str, year: str, year_games: dict):
+    def update_team_file(self, team_name: str, year: str, year_games: list, full_year: bool):
         team_data = self.load_team_file(team_name, False)
-        team_data[year] = year_games
+        new_games_list = []
+        if full_year:
+            new_games_list = year_games
+        else:
+            new_games_list = team_data.get(year, [])
+            for i, game in enumerate(year_games):
+                if game is not None:
+                    Utils.add_element_to_list_at_index(new_games_list, i, game)
+
+        team_data[year] = new_games_list
         team_file_name = self.__get_team_file_path_name(team_name)
         try:
             with open(team_file_name, "w", encoding="utf-8") as f:

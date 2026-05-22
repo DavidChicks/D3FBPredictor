@@ -54,7 +54,7 @@ class Utils:
         delta = abs((game_day - sept_first).days)
         day_of_week = game_day.weekday() # 0 = Monday; 6 = Sunday
         if not day_of_week == SATURDAY: 
-            if day_of_week > WEDNESDAY:
+            if day_of_week >= WEDNESDAY:
                 shift = SATURDAY - day_of_week
             else:
                 shift = -(day_of_week + 2)

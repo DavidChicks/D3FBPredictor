@@ -8,14 +8,16 @@ from __future__ import annotations
 
 import argparse
 import logging
+from re import A, I
 import sys
+
+from scripts import iall_teams
 
 
 sys.path.insert(1, './scripts')
 
 from all_teams import All_Teams
 from averaging import Averaging
-from build_ai_data import Build_AI_Data
 from consistency_check import Consistency_Check
 from file_handler import File_Handler
 from url_handler import Url_Handler
@@ -37,6 +39,7 @@ def main() -> None:
     parser.add_argument("--ai_generator", "-ai", action="store_true", help="build the ai input data files for the specified year")
     parser.add_argument("--games", "-g", action="store_true", help="get the games for team / year")
     parser.add_argument("--consistency", "-c", action="store_true", help="consistency check")
+    parser.add_argument("--do_fixes", "-d", action="store_true", help="fix consistency errors (only valid if consistency check also set")
     parser.add_argument("--stats", "-s", action="store_true", help="calculate stats for team / year")
     parser.add_argument("--force", "-f", action="store_true", help="re-fetch even if cached")
     args = parser.parse_args()
@@ -52,15 +55,18 @@ def main() -> None:
         all_teams = teams.get_and_save_all_teams()
         return
 
-    # TODO verify arguments are valid (e.g. year is 2 or 4 digits or "a/all", team is in all_teams or "a/all")
+    if args.do_fixes and not args.consistency:
+        logging.error("The --do_fixes flag is only valid if --consistency is also set")
+        return
 
     year = args.year
     if year is None and (args.games or args.stats):
         logging.error("Must speicficy a year (-year / -y) for games or stats")
         return
+    if year is not None and len(year) == 2:
+        year = "20" + year
     team = args.team
     force = args.force
-    # TODO: verify that year and team are valid (e.g. year is 4 digits, team is in all_teams)
     
     if args.games:
         logging.info(f"Fetching games for team {team} in year {year}...")
@@ -72,10 +78,11 @@ def main() -> None:
 
     consistency_errors = False
     if args.consistency:
+        do_fixes = args.do_fixes
         if year in ("a", "all"):
-            consistency_errors =Consistency_Check.check_games_all_years(ifile_handler=file_handler, iall_teams=all_teams)
+            consistency_errors =Consistency_Check.check_games_all_years(ifile_handler=file_handler, iall_teams=all_teams, do_fixes=do_fixes)
         else:
-            consistency_check = Consistency_Check(ifile_handler=file_handler, iall_teams=all_teams, year=year)
+            consistency_check = Consistency_Check(ifile_handler=file_handler, iall_teams=all_teams, year=year, do_fixes=do_fixes)
             consistency_errors = consistency_check.check_games()
 
     if args.stats:
@@ -87,7 +94,8 @@ def main() -> None:
 
     if (args.ai_generator):
         logging.info(f"Building AI data")
-        ai_data_builder = Build_AI_Data(ifile_handler=file_handler)
+        from build_ai_data import Build_AI_Data
+        ai_data_builder = Build_AI_Data(ifile_handler=file_handler, iall_teams=all_teams)
         ai_data_builder.build_ai_data()
 
 

@@ -27,6 +27,8 @@ class Averaging:
     opp_all_stats = {}
     away_count = 0
     home_count = 0
+    too_few_games = []
+    errors = []
 
     def __init__(self, ifile_handler: IFile_Handler, iall_teams: IAll_Teams, team: str, year: str):
         """Create an Averaging instance that may operate on a given file.
@@ -41,9 +43,19 @@ class Averaging:
     @staticmethod
     def calculate_and_save_stats_for_all_teams(iall_teams: IAll_Teams, ifile_handler: IFile_Handler, year: str): # , week: int = 11):
         all_teams = iall_teams.get_all_teams_for_year(year)
+        Averaging.too_few_games = []
+        Averaging.errors = []
         for team_name in all_teams:
             averaging = Averaging(ifile_handler=ifile_handler, iall_teams=iall_teams, team=team_name, year=year)
             games = averaging.calculate_and_save_stats()
+        if len(Averaging.too_few_games) > 0:
+            logging.info(f"Teams with too few games to calculate stats for year {year}:")
+            for team in Averaging.too_few_games:
+                logging.info(f"  {team}")
+        if len(Averaging.errors) > 0:
+            logging.error(f"Errors encountered during stats calculation for year {year}:")
+            for error in Averaging.errors:
+                logging.error(f"  {error}")
 
 
     def calculate_and_save_stats(self): # , week: int = 11):
@@ -99,6 +111,7 @@ class Averaging:
         if len(team_year_data) < Averaging.MINIMUM_GAMES or \
             len(list(filter(lambda x: x is not None, team_year_data))) < Averaging.MINIMUM_GAMES:
             logging.info(f"  Too few games, {len(team_year_data)}, skipping")
+            Averaging.too_few_games.append(self.team)
             return []
         game_lists = {
             "away": [],
@@ -142,7 +155,9 @@ class Averaging:
     def __load_game_file(self, game_file: str, is_home: bool):
         game_data = self.ifile_handler.load_game_file(year=self.year, game_file_name=game_file)
         if (game_data is None) or (not isinstance(game_data, dict)):
-            logging.error(f"Failed to load game file {game_file} for year {self.year}")
+            error_message = f"Failed to load game file {game_file} for year {self.year}"
+            logging.error(error_message)
+            Averaging.errors.append(error_message)
             return
 
         team_stats = game_data["home_stats"] if is_home else game_data["away_stats"]

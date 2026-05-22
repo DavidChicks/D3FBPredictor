@@ -83,7 +83,7 @@ class Year_Games():
 
         # TODO: keep existing data if the file already exists, and only add new games to it (don't overwrite existing data)
         if at_least_one_file_updated or not local_file:
-            self.ifile_handler.update_team_file(team_name, year, all_games_data)
+            self.ifile_handler.update_team_file(team_name, year, all_games_data, True)
         return at_least_one_file_updated
 
 

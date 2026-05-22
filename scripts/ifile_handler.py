@@ -42,6 +42,5 @@ class IFile_Handler():
     def save_team_file(team_name: str, team_data: dict) -> None:
         pass
 
-    def update_team_file(team_name: str, team_data: dict) -> None:
+    def update_team_file(team_name: str, year: str, year_games: list, full_year: bool) -> None:
         pass
-

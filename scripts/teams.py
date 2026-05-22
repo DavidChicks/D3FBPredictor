@@ -28,7 +28,6 @@ class Teams:
 
     def get_team_games_from_web(self, team: str, year: int) -> list[dict]:
         team_url_part = self.__get_team_url_part(team)
-        retries = 3
         try:
             logging.info(f"    Fetching from web -- {team} - {year}")
             page = self.iurl_handler.get_team_page(team_url_part, year, 3)
