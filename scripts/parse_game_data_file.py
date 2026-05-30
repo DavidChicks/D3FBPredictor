@@ -159,8 +159,8 @@ class Parse_Game_Data_File:
         "Completions": "Pass_completions",
         "Attempts": "Pass_plays",
         "Net yards per pass play": "Pass_yards_per_play",
-        "Sacked: Number": "Sacks_count",
-        "Yards": "Sacks_yards",
+        "Sacked: Number": "Sacked_count",
+        "Yards": "Sacked_yards",
         "Had intercepted": "Int_thrown",
         "NET YARDS RUSHING": "Rush_yards",
         "Rushing Attempts": "Rush_plays",
@@ -183,6 +183,58 @@ class Parse_Game_Data_File:
         "SACKS: Yards": "Sacks_yards",
         "TIME OF POSSESSION": "TOP",
     }
+
+
+    @staticmethod
+    def get_stat_names() -> list[str]:
+        return list(Parse_Game_Data_File.stat_rename.values())
+
+
+    def get_game_score(self, game_page) -> dict:
+        scores_div = game_page.find_all("div", class_="stats-wrapper clearfix")
+        if scores_div is None or len(scores_div) == 0:
+            return None
+        scores_tables = scores_div[0].find_all("table") if scores_div else None
+        if scores_tables is None or len(scores_tables) == 0:
+            return None
+
+        rows = scores_tables[0].find_all("tr")
+        if rows is None or len(rows) < 2:
+            return None
+        scores_row = rows[1]
+        scores_tds = scores_row.find_all("td")
+        away_score = self.__get_score_from_td_cell(scores_tds[0])
+        home_score = self.__get_score_from_td_cell(scores_tds[1])
+        return {"away_score": away_score,
+                "home_score": home_score
+                }
+
+
+    def get_game_stats(self, iall_teams: IAll_Teams, game_page) -> dict:
+        teams_tables = game_page.find_all("table", class_="all-center")
+        if teams_tables is None or len(teams_tables) == 0:
+            return None
+
+        home_stats = {}
+        away_stats = {}
+        rows = teams_tables[0].find_all("tr")
+        team_name_row = rows[0]
+        team_names = team_name_row.find_all("th")
+        self.away_team = iall_teams.get_primary_team_name(team_names[0].get_text(strip=True))
+        self.home_team = iall_teams.get_primary_team_name(team_names[2].get_text(strip=True))
+
+        for row in rows:
+            self.__process_row(row, away_stats, home_stats)
+
+        return_object = {}
+        missing = []
+        away_stats  = self.__stat_renamer(away_stats)
+        home_stats  = self.__stat_renamer(home_stats)
+        return_object["away_team"] = iall_teams.get_primary_team_name(self.away_team)
+        return_object["home_team"] = iall_teams.get_primary_team_name(self.home_team)
+        return_object["away_stats"] = away_stats
+        return_object["home_stats"] = home_stats
+        return return_object
 
 
     def __get_child_fields(self, cell: dict, ignore_fields:str, strip: bool) -> list[str]:
@@ -402,54 +454,4 @@ class Parse_Game_Data_File:
                     logging.error(f"Failed to assign stat '{stat_value}' on Game_Statistics")
         return statistics
 
-
-    def get_game_score(self, game_page) -> dict:
-        scores_div = game_page.find_all("div", class_="stats-wrapper clearfix")
-        if scores_div is None or len(scores_div) == 0:
-            return None
-        scores_tables = scores_div[0].find_all("table") if scores_div else None
-        if scores_tables is None or len(scores_tables) == 0:
-            return None
-
-        rows = scores_tables[0].find_all("tr")
-        if rows is None or len(rows) < 2:
-            return None
-        scores_row = rows[1]
-        scores_tds = scores_row.find_all("td")
-        away_score = self.__get_score_from_td_cell(scores_tds[0])
-        home_score = self.__get_score_from_td_cell(scores_tds[1])
-        return {"away_score": away_score,
-                "home_score": home_score
-                }
-
-    @staticmethod
-    def get_stat_names() -> list[str]:
-        return list(Parse_Game_Data_File.stat_rename.values())
-
-
-    def get_game_stats(self, iall_teams: IAll_Teams, game_page) -> dict:
-        teams_tables = game_page.find_all("table", class_="all-center")
-        if teams_tables is None or len(teams_tables) == 0:
-            return None
-
-        home_stats = {}
-        away_stats = {}
-        rows = teams_tables[0].find_all("tr")
-        team_name_row = rows[0]
-        team_names = team_name_row.find_all("th")
-        self.away_team = iall_teams.get_primary_team_name(team_names[0].get_text(strip=True))
-        self.home_team = iall_teams.get_primary_team_name(team_names[2].get_text(strip=True))
-
-        for row in rows:
-            self.__process_row(row, away_stats, home_stats)
-
-        return_object = {}
-        missing = []
-        away_stats  = self.__stat_renamer(away_stats)
-        home_stats  = self.__stat_renamer(home_stats)
-        return_object["away_team"] = iall_teams.get_primary_team_name(self.away_team)
-        return_object["home_team"] = iall_teams.get_primary_team_name(self.home_team)
-        return_object["away_stats"] = away_stats
-        return_object["home_stats"] = home_stats
-        return return_object
 

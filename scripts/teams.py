@@ -9,21 +9,16 @@ import time
 
 from iall_teams import IAll_Teams
 from ifile_handler import IFile_Handler
+from iteams import ITeams
 from iurl_handler import IUrl_Handler
 from parse_game_data_file import Parse_Game_Data_File
 
-class Teams:
+class Teams(ITeams):
 
     def __init__(self, ifile_handler: IFile_Handler, iurl_handler: IUrl_Handler, iall_teams: IAll_Teams):
         self.ifile_handler = ifile_handler
         self.iall_teams = iall_teams
         self.iurl_handler = iurl_handler
-
-
-    def __get_team_url_part(self, team: str) -> str:
-        all_teams = self.iall_teams.get_all_teams()
-        url_part = all_teams.get(team)["link"] if team in all_teams else None
-        return url_part if url_part is not None else team
 
 
     def get_team_games_from_web(self, team: str, year: int) -> list[dict]:
@@ -108,3 +103,11 @@ class Teams:
             return False
         self.ifile_handler.save_game_file(game_url, stats, year)
         return True
+
+
+    def __get_team_url_part(self, team: str) -> str:
+        all_teams = self.iall_teams.get_all_teams()
+        url_part = all_teams.get(team)["link"] if team in all_teams else None
+        return url_part if url_part is not None else team
+
+

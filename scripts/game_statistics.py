@@ -61,6 +61,8 @@ class Game_Statistics(dict):
         "Pass_completions": int,
         "Pass_plays": int,
         "Pass_yards_per_play": float,
+        "Sacked_count": int,
+        "Sacked_yards": int,
         "Sacks_count": int,
         "Sacks_yards": int,
         "Int_thrown": int,
@@ -84,46 +86,3 @@ class Game_Statistics(dict):
         "Int_ret_yard": int,
         "TOP": int,
     }
-
-    #First_downs_total: int
-    #First_downs_passing: int
-    #First_downs_rushing: int
-    #First_downs_penalties: int
-    #Third_down_conversions: int
-    #Third_downs_count: int
-    #Third_downs_efficiency: float
-    #Fourth_downs_conversions: int
-    #Fourth_downs_count: int
-    #Fourth_downs_efficiency: float
-    #Yards_total: int
-    #Offensive_plays: int
-    #Yards_per_play: float
-    #Pass_yards: int
-    #Pass_completions: int
-    #Pass_attempts: int
-    #Pass_yards_average: float
-    #Sacks_count: int
-    #Sacks_yards: int
-    #Int_thrown: int
-    #Rush_yards: int
-    #Rush_attempts: int
-    #Rush_yards_average: float
-    #Punts_count: int
-    #Punts_yards: int
-    #Punts_yards_average: float
-    #Return_yards_total: int
-    #Punt_ret_count: int
-    #Punt_ret_yards: int
-    #KO_ret_count: int
-    #KO_ret_yards: int
-    #Int_ret_count: int
-    #Int_ret_yards: int
-    #Pentalies_count: int
-    #Penalties_yards: int
-    #Fumbles_count: int
-    #Fumbles_lost: int
-    #Sacks_count: int
-    #Sacks_yards: int
-    #Int_ret_count: int
-    #Int_ret_yard: int
-    #TOP: int
