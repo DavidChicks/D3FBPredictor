@@ -264,9 +264,10 @@ class Consistency_Check:
                 if field_name not in stats_data:
                     print(f"{field_name} not in stats_data.{team}")
                     self.errors.append(f"Stats file {stats_file} is missing expected field: {field_name} in {team} stats")
-                if stats_data[field_name] is None:
-                    print(f"{field_name} not in stats_data.{team}")
-                    self.errors.append(f"Stats file {stats_file} has null value for field: {field_name} in {team} stats")
+                else:
+                    if stats_data[field_name] is None:
+                        print(f"{field_name} not in stats_data.{team}")
+                        self.errors.append(f"Stats file {stats_file} has null value for field: {field_name} in {team} stats")
         if len(stats_data) != len(self.stat_names) * len(sub_fields):
             self.errors.append(f"Stats file {stats_file} has unexpected number of fields: {len(stats_data)} in {team} stats; expected: {len(self.stat_names) * len(sub_fields)}") #"; data: {stats_data}")
 
