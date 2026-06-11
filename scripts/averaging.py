@@ -107,7 +107,7 @@ class Averaging:
         team_data = self.ifile_handler.load_team_file(self.team, False)
         if (team_data is None) or (self.year not in team_data):
             return None
-        return team_data[self.year]
+        return list(filter(lambda game: game is not None and not game.get("ignore", False), team_data[self.year]))
 
 
     def __get_team_year_files(self) -> dict:
